@@ -19,8 +19,8 @@ const AdminDashboard = () => {
   const [tab, setTab] = useState<Tab>("Profile");
   const [search, setSearch] = useState("");
 
-  if (!loading && (!user || profile?.role !== "admin")) return <Navigate to="/admin/login" />;
-  if (loading) return <div className="min-h-screen gradient-bg flex items-center justify-center text-primary-foreground">Loading...</div>;
+  if (loading || (user && !profile)) return <div className="min-h-screen gradient-bg flex items-center justify-center text-primary-foreground">Loading...</div>;
+  if (!user || profile?.role !== "admin") return <Navigate to="/admin/login" />;
 
   return (
     <div className="min-h-screen bg-background">
