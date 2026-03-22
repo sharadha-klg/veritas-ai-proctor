@@ -19,8 +19,8 @@ const mockTests = {
 
 const StudentDashboard = () => {
   const { user, profile, loading } = useAuth();
-  if (!loading && (!user || profile?.role !== "student")) return <Navigate to="/student/login" />;
-  if (loading) return <div className="min-h-screen gradient-bg flex items-center justify-center text-primary-foreground">Loading...</div>;
+  if (loading || (user && !profile)) return <div className="min-h-screen gradient-bg flex items-center justify-center text-primary-foreground">Loading...</div>;
+  if (!user || profile?.role !== "student") return <Navigate to="/student/login" />;
 
   return (
     <div className="min-h-screen bg-background">
