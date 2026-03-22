@@ -43,7 +43,7 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {tab === "Profile" && <ProfileTab user={user} />}
+        {tab === "Profile" && <ProfileTab profile={profile} />}
         {tab === "Tests" && <TestsTab />}
         {tab === "Results" && <ResultsTab search={search} setSearch={setSearch} />}
       </main>
