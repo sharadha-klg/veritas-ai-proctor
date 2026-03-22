@@ -51,17 +51,17 @@ const AdminDashboard = () => {
   );
 };
 
-const ProfileTab = ({ user }: { user: any }) => (
+const ProfileTab = ({ profile }: { profile: any }) => (
   <div className="bg-card rounded-xl border border-border p-6 max-w-lg opacity-0 animate-fade-in" style={{ animationDelay: "100ms" }}>
     <h2 className="text-xl font-display font-bold text-foreground mb-5">Admin Profile</h2>
     <div className="space-y-4">
       {[
-        ["Full Name", user.fullName],
-        ["Email", user.email],
-        ["Organization", user.organization || "—"],
-        ["Department", user.department || "—"],
-        ["Role", user.adminRole || "Admin"],
-        ["Contact", user.contactNumber || "—"],
+        ["Full Name", profile?.full_name || "—"],
+        ["Email", profile?.email || "—"],
+        ["Organization", profile?.organization || "—"],
+        ["Department", profile?.department || "—"],
+        ["Role", profile?.admin_role || "Admin"],
+        ["Contact", profile?.contact_number || "—"],
       ].map(([label, value]) => (
         <div key={label} className="flex justify-between text-sm">
           <span className="text-muted-foreground">{label}</span>
