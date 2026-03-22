@@ -15,11 +15,12 @@ const mockResults = [
 ];
 
 const AdminDashboard = () => {
-  const { user } = useAuth();
+  const { user, profile, loading } = useAuth();
   const [tab, setTab] = useState<Tab>("Profile");
   const [search, setSearch] = useState("");
 
-  if (!user || user.role !== "admin") return <Navigate to="/admin/login" />;
+  if (!loading && (!user || profile?.role !== "admin")) return <Navigate to="/admin/login" />;
+  if (loading) return <div className="min-h-screen gradient-bg flex items-center justify-center text-primary-foreground">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-background">
@@ -42,7 +43,7 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {tab === "Profile" && <ProfileTab user={user} />}
+        {tab === "Profile" && <ProfileTab profile={profile} />}
         {tab === "Tests" && <TestsTab />}
         {tab === "Results" && <ResultsTab search={search} setSearch={setSearch} />}
       </main>
@@ -50,17 +51,17 @@ const AdminDashboard = () => {
   );
 };
 
-const ProfileTab = ({ user }: { user: any }) => (
+const ProfileTab = ({ profile }: { profile: any }) => (
   <div className="bg-card rounded-xl border border-border p-6 max-w-lg opacity-0 animate-fade-in" style={{ animationDelay: "100ms" }}>
     <h2 className="text-xl font-display font-bold text-foreground mb-5">Admin Profile</h2>
     <div className="space-y-4">
       {[
-        ["Full Name", user.fullName],
-        ["Email", user.email],
-        ["Organization", user.organization || "—"],
-        ["Department", user.department || "—"],
-        ["Role", user.adminRole || "Admin"],
-        ["Contact", user.contactNumber || "—"],
+        ["Full Name", profile?.full_name || "—"],
+        ["Email", profile?.email || "—"],
+        ["Organization", profile?.organization || "—"],
+        ["Department", profile?.department || "—"],
+        ["Role", profile?.admin_role || "Admin"],
+        ["Contact", profile?.contact_number || "—"],
       ].map(([label, value]) => (
         <div key={label} className="flex justify-between text-sm">
           <span className="text-muted-foreground">{label}</span>
