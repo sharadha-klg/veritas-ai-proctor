@@ -15,11 +15,12 @@ const mockResults = [
 ];
 
 const AdminDashboard = () => {
-  const { user } = useAuth();
+  const { user, profile, loading } = useAuth();
   const [tab, setTab] = useState<Tab>("Profile");
   const [search, setSearch] = useState("");
 
-  if (!user || user.role !== "admin") return <Navigate to="/admin/login" />;
+  if (!loading && (!user || profile?.role !== "admin")) return <Navigate to="/admin/login" />;
+  if (loading) return <div className="min-h-screen gradient-bg flex items-center justify-center text-primary-foreground">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-background">

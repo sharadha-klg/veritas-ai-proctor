@@ -18,15 +18,16 @@ const mockTests = {
 };
 
 const StudentDashboard = () => {
-  const { user } = useAuth();
-  if (!user || user.role !== "student") return <Navigate to="/student/login" />;
+  const { user, profile, loading } = useAuth();
+  if (!loading && (!user || profile?.role !== "student")) return <Navigate to="/student/login" />;
+  if (loading) return <div className="min-h-screen gradient-bg flex items-center justify-center text-primary-foreground">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader />
       <main className="max-w-5xl mx-auto px-6 py-8">
         <h1 className="text-2xl font-display font-bold text-foreground mb-1 opacity-0 animate-fade-in">
-          Welcome, {user.fullName.split(" ")[0]}
+          Welcome, {profile?.full_name?.split(" ")[0] || "Student"}
         </h1>
         <p className="text-muted-foreground text-sm mb-8 opacity-0 animate-fade-in" style={{ animationDelay: "80ms" }}>
           Your exam dashboard
