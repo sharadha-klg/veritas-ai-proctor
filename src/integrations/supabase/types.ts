@@ -14,7 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          admin_role: string | null
+          college_name: string | null
+          contact_number: string | null
+          created_at: string
+          department: string | null
+          email: string
+          full_name: string
+          id: string
+          organization: string | null
+          role: string
+          student_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_role?: string | null
+          college_name?: string | null
+          contact_number?: string | null
+          created_at?: string
+          department?: string | null
+          email: string
+          full_name: string
+          id?: string
+          organization?: string | null
+          role: string
+          student_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_role?: string | null
+          college_name?: string | null
+          contact_number?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          organization?: string | null
+          role?: string
+          student_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
