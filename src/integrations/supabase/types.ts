@@ -62,6 +62,104 @@ export type Database = {
         }
         Relationships: []
       }
+      questions: {
+        Row: {
+          correct_answer: string | null
+          created_at: string
+          id: string
+          language: string | null
+          marks: number
+          options: Json | null
+          question_text: string
+          question_type: string
+          sort_order: number
+          starter_code: string | null
+          test_id: string
+        }
+        Insert: {
+          correct_answer?: string | null
+          created_at?: string
+          id?: string
+          language?: string | null
+          marks?: number
+          options?: Json | null
+          question_text: string
+          question_type: string
+          sort_order?: number
+          starter_code?: string | null
+          test_id: string
+        }
+        Update: {
+          correct_answer?: string | null
+          created_at?: string
+          id?: string
+          language?: string | null
+          marks?: number
+          options?: Json | null
+          question_text?: string
+          question_type?: string
+          sort_order?: number
+          starter_code?: string | null
+          test_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tests: {
+        Row: {
+          admin_id: string
+          allowed_tools: string[] | null
+          created_at: string
+          difficulty: string | null
+          exam_type: string
+          id: string
+          is_open_book: boolean
+          name: string
+          status: string
+          time_limit: number
+          topic: string | null
+          total_marks: number
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          allowed_tools?: string[] | null
+          created_at?: string
+          difficulty?: string | null
+          exam_type: string
+          id?: string
+          is_open_book?: boolean
+          name: string
+          status?: string
+          time_limit?: number
+          topic?: string | null
+          total_marks?: number
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          allowed_tools?: string[] | null
+          created_at?: string
+          difficulty?: string | null
+          exam_type?: string
+          id?: string
+          is_open_book?: boolean
+          name?: string
+          status?: string
+          time_limit?: number
+          topic?: string | null
+          total_marks?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
