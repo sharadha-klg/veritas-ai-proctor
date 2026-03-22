@@ -1,23 +1,32 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
-export interface User {
+export interface Profile {
   id: string;
-  fullName: string;
+  user_id: string;
+  full_name: string;
   email: string;
   role: "student" | "admin";
-  collegeName?: string;
-  department?: string;
-  studentId?: string;
-  organization?: string;
-  adminRole?: string;
-  contactNumber?: string;
+  college_name?: string | null;
+  department?: string | null;
+  student_id?: string | null;
+  organization?: string | null;
+  admin_role?: string | null;
+  contact_number?: string | null;
 }
 
 interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string, role: "student" | "admin") => boolean;
-  register: (userData: Omit<User, "id"> & { password: string }) => boolean;
-  logout: () => void;
+  user: SupabaseUser | null;
+  profile: Profile | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<{ error: string | null }>;
+  register: (
+    email: string,
+    password: string,
+    metadata: Record<string, string>
+  ) => Promise<{ error: string | null }>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -28,42 +37,73 @@ export const useAuth = () => {
   return ctx;
 };
 
-// Simple localStorage-based auth for now (will move to Lovable Cloud)
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem("veritas_user");
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const register = (userData: Omit<User, "id"> & { password: string }) => {
-    const users = JSON.parse(localStorage.getItem("veritas_users") || "[]");
-    if (users.find((u: any) => u.email === userData.email)) return false;
-    const newUser = { ...userData, id: crypto.randomUUID() };
-    users.push(newUser);
-    localStorage.setItem("veritas_users", JSON.stringify(users));
-    const { password: _, ...userWithoutPassword } = newUser;
-    setUser(userWithoutPassword as User);
-    localStorage.setItem("veritas_user", JSON.stringify(userWithoutPassword));
-    return true;
+  const fetchProfile = async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+    if (data) setProfile(data as Profile);
   };
 
-  const login = (email: string, password: string, role: "student" | "admin") => {
-    const users = JSON.parse(localStorage.getItem("veritas_users") || "[]");
-    const found = users.find((u: any) => u.email === email && u.password === password && u.role === role);
-    if (!found) return false;
-    const { password: _, ...userWithoutPassword } = found;
-    setUser(userWithoutPassword as User);
-    localStorage.setItem("veritas_user", JSON.stringify(userWithoutPassword));
-    return true;
+  useEffect(() => {
+    // Set up auth listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          // Use setTimeout to avoid potential deadlock with Supabase auth
+          setTimeout(() => fetchProfile(session.user.id), 0);
+        } else {
+          setProfile(null);
+        }
+      }
+    );
+
+    // THEN check existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error: error?.message ?? null };
   };
 
-  const logout = () => {
+  const register = async (
+    email: string,
+    password: string,
+    metadata: Record<string, string>
+  ) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: metadata },
+    });
+    return { error: error?.message ?? null };
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem("veritas_user");
+    setProfile(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

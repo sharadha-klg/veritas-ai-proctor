@@ -62,42 +62,48 @@ const AuthForm = ({ role, mode }: AuthFormProps) => {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
 
-    setTimeout(() => {
+    try {
       if (mode === "login") {
-        const ok = login(form.email, form.password, role);
-        if (ok) {
+        const { error } = await login(form.email, form.password);
+        if (error) {
+          toast.error(error);
+        } else {
           toast.success("Welcome back!");
           navigate(role === "student" ? "/student/dashboard" : "/admin/dashboard");
-        } else {
-          toast.error("Invalid credentials");
         }
       } else {
-        const ok = register({
-          fullName: form.fullName,
-          email: form.email,
-          password: form.password,
+        const metadata: Record<string, string> = {
+          full_name: form.fullName,
           role,
-          collegeName: form.collegeName || undefined,
-          department: form.department || undefined,
-          studentId: form.studentId || undefined,
-          organization: form.organization || undefined,
-          adminRole: form.adminRole || undefined,
-          contactNumber: form.contactNumber || undefined,
-        });
-        if (ok) {
+          department: form.department,
+        };
+        if (role === "student") {
+          metadata.college_name = form.collegeName;
+          metadata.student_id = form.studentId;
+        } else {
+          metadata.organization = form.organization;
+          metadata.admin_role = form.adminRole;
+          metadata.contact_number = form.contactNumber;
+        }
+
+        const { error } = await register(form.email, form.password, metadata);
+        if (error) {
+          toast.error(error);
+        } else {
           toast.success("Account created!");
           navigate(role === "student" ? "/student/dashboard" : "/admin/dashboard");
-        } else {
-          toast.error("Email already registered");
         }
       }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
       setLoading(false);
-    }, 600);
+    }
   };
 
   const isLogin = mode === "login";
@@ -111,7 +117,6 @@ const AuthForm = ({ role, mode }: AuthFormProps) => {
   return (
     <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Back button */}
         <button
           onClick={() => navigate("/select-role")}
           className="flex items-center gap-2 text-primary-foreground/60 hover:text-primary-foreground mb-6 
@@ -121,9 +126,7 @@ const AuthForm = ({ role, mode }: AuthFormProps) => {
           Back to role selection
         </button>
 
-        {/* Card */}
         <div className="glass-card rounded-2xl p-8 opacity-0 animate-fade-in-scale">
-          {/* Header */}
           <div className="flex items-center gap-3 mb-2">
             <div className="w-9 h-9 rounded-xl gradient-bg-horizontal flex items-center justify-center">
               <Shield className="w-4.5 h-4.5 text-primary-foreground" />
