@@ -11,6 +11,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminRegister from "./pages/AdminRegister";
 import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import TakeExam from "./pages/TakeExam";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
