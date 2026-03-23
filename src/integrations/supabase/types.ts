@@ -14,6 +14,100 @@ export type Database = {
   }
   public: {
     Tables: {
+      exam_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          exam_key: string
+          id: string
+          is_flagged: boolean
+          risk_score: number
+          started_at: string | null
+          status: string
+          student_id: string
+          system_checks: Json | null
+          test_id: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          exam_key?: string
+          id?: string
+          is_flagged?: boolean
+          risk_score?: number
+          started_at?: string | null
+          status?: string
+          student_id: string
+          system_checks?: Json | null
+          test_id: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          exam_key?: string
+          id?: string
+          is_flagged?: boolean
+          risk_score?: number
+          started_at?: string | null
+          status?: string
+          student_id?: string
+          system_checks?: Json | null
+          test_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_sessions_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proctoring_events: {
+        Row: {
+          description: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          risk_delta: number
+          session_id: string
+          severity: string
+          timestamp: string
+        }
+        Insert: {
+          description: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          risk_delta?: number
+          session_id: string
+          severity?: string
+          timestamp?: string
+        }
+        Update: {
+          description?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          risk_delta?: number
+          session_id?: string
+          severity?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proctoring_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "exam_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           admin_role: string | null
@@ -108,6 +202,51 @@ export type Database = {
             columns: ["test_id"]
             isOneToOne: false
             referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_answers: {
+        Row: {
+          answer_text: string | null
+          created_at: string
+          id: string
+          is_correct: boolean | null
+          marks_awarded: number | null
+          question_id: string
+          session_id: string
+        }
+        Insert: {
+          answer_text?: string | null
+          created_at?: string
+          id?: string
+          is_correct?: boolean | null
+          marks_awarded?: number | null
+          question_id: string
+          session_id: string
+        }
+        Update: {
+          answer_text?: string | null
+          created_at?: string
+          id?: string
+          is_correct?: boolean | null
+          marks_awarded?: number | null
+          question_id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_answers_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "exam_sessions"
             referencedColumns: ["id"]
           },
         ]
