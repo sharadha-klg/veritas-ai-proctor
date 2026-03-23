@@ -1,26 +1,45 @@
 import { useAuth } from "@/context/AuthContext";
 import DashboardHeader from "@/components/DashboardHeader";
-import { Clock, CheckCircle2, CalendarClock, Play } from "lucide-react";
-import { Navigate } from "react-router-dom";
-
-const mockTests = {
-  ongoing: [
-    { id: 1, name: "Data Structures Mid-Term", timeLimit: "90 min", status: "In Progress" },
-  ],
-  completed: [
-    { id: 2, name: "Operating Systems Quiz 3", timeLimit: "30 min", status: "Completed", score: "82%" },
-    { id: 3, name: "DBMS Assignment Test", timeLimit: "60 min", status: "Completed", score: "91%" },
-  ],
-  upcoming: [
-    { id: 4, name: "Computer Networks Final", timeLimit: "120 min", status: "Scheduled", date: "Mar 28" },
-    { id: 5, name: "Machine Learning Lab Exam", timeLimit: "90 min", status: "Scheduled", date: "Apr 02" },
-  ],
-};
+import { Clock, CheckCircle2, CalendarClock, Play, Loader2 } from "lucide-react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const StudentDashboard = () => {
   const { user, profile, loading } = useAuth();
+  const navigate = useNavigate();
+  const [tests, setTests] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [loadingTests, setLoadingTests] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchData = async () => {
+      const [testsRes, sessionsRes] = await Promise.all([
+        supabase.from("tests").select("*").in("status", ["active", "scheduled"]).order("created_at", { ascending: false }),
+        supabase.from("exam_sessions").select("*, tests(name)").eq("student_id", user.id),
+      ]);
+      setTests(testsRes.data || []);
+      setSessions(sessionsRes.data || []);
+      setLoadingTests(false);
+    };
+    fetchData();
+  }, [user]);
+
   if (loading || (user && !profile)) return <div className="min-h-screen gradient-bg flex items-center justify-center text-primary-foreground">Loading...</div>;
   if (!user || profile?.role !== "student") return <Navigate to="/student/login" />;
+
+  const completedSessionTestIds = new Set(sessions.filter(s => s.status === "completed").map(s => s.test_id));
+  const inProgressSessionTestIds = new Set(sessions.filter(s => s.status === "in_progress").map(s => s.test_id));
+
+  const activeTests = tests.filter(t => t.status === "active" && !completedSessionTestIds.has(t.id) && !inProgressSessionTestIds.has(t.id));
+  const ongoingTests = tests.filter(t => inProgressSessionTestIds.has(t.id));
+  const scheduledTests = tests.filter(t => t.status === "scheduled");
+  const completedSessions = sessions.filter(s => s.status === "completed");
+
+  const handleStartTest = (testId: string) => {
+    navigate(`/exam/${testId}`);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -33,26 +52,45 @@ const StudentDashboard = () => {
           Your exam dashboard
         </p>
 
-        {/* Ongoing */}
-        <Section title="Ongoing Tests" icon={<Clock className="w-5 h-5 text-warning" />} delay={160}>
-          {mockTests.ongoing.map((t) => (
-            <TestCard key={t.id} {...t} actionLabel="Continue" variant="ongoing" />
-          ))}
-        </Section>
+        {loadingTests ? (
+          <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+        ) : (
+          <>
+            {ongoingTests.length > 0 && (
+              <Section title="Ongoing Tests" icon={<Clock className="w-5 h-5 text-warning" />} delay={160}>
+                {ongoingTests.map(t => (
+                  <TestCard key={t.id} name={t.name} timeLimit={`${t.time_limit} min`} status="In Progress" variant="ongoing"
+                    actionLabel="Continue" onAction={() => handleStartTest(t.id)} />
+                ))}
+              </Section>
+            )}
 
-        {/* Upcoming */}
-        <Section title="Upcoming Tests" icon={<CalendarClock className="w-5 h-5 text-primary" />} delay={240}>
-          {mockTests.upcoming.map((t) => (
-            <TestCard key={t.id} {...t} actionLabel="Start Test" variant="upcoming" />
-          ))}
-        </Section>
+            {activeTests.length > 0 && (
+              <Section title="Available Tests" icon={<Play className="w-5 h-5 text-primary" />} delay={200}>
+                {activeTests.map(t => (
+                  <TestCard key={t.id} name={t.name} timeLimit={`${t.time_limit} min`} status="Active"
+                    variant="upcoming" actionLabel="Start Test" onAction={() => handleStartTest(t.id)} />
+                ))}
+              </Section>
+            )}
 
-        {/* Completed */}
-        <Section title="Completed Tests" icon={<CheckCircle2 className="w-5 h-5 text-success" />} delay={320}>
-          {mockTests.completed.map((t) => (
-            <TestCard key={t.id} {...t} variant="completed" />
-          ))}
-        </Section>
+            {scheduledTests.length > 0 && (
+              <Section title="Upcoming Tests" icon={<CalendarClock className="w-5 h-5 text-primary" />} delay={240}>
+                {scheduledTests.map(t => (
+                  <TestCard key={t.id} name={t.name} timeLimit={`${t.time_limit} min`} status="Scheduled" variant="upcoming" />
+                ))}
+              </Section>
+            )}
+
+            <Section title="Completed Tests" icon={<CheckCircle2 className="w-5 h-5 text-success" />} delay={320}>
+              {completedSessions.length > 0 ? completedSessions.map(s => (
+                <TestCard key={s.id} name={(s as any).tests?.name || "Test"} timeLimit="" status="Completed" variant="completed" />
+              )) : (
+                <p className="text-sm text-muted-foreground col-span-2">No completed tests yet</p>
+              )}
+            </Section>
+          </>
+        )}
       </main>
     </div>
   );
@@ -68,7 +106,7 @@ const Section = ({ title, icon, delay, children }: { title: string; icon: React.
   </div>
 );
 
-const TestCard = ({ name, timeLimit, status, score, date, actionLabel, variant }: any) => (
+const TestCard = ({ name, timeLimit, status, score, actionLabel, variant, onAction }: any) => (
   <div className="bg-card rounded-xl border border-border p-5 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col gap-3">
     <div className="flex items-start justify-between">
       <h3 className="font-semibold text-foreground text-sm">{name}</h3>
@@ -81,13 +119,12 @@ const TestCard = ({ name, timeLimit, status, score, date, actionLabel, variant }
       </span>
     </div>
     <div className="flex items-center gap-4 text-xs text-muted-foreground">
-      <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{timeLimit}</span>
+      {timeLimit && <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{timeLimit}</span>}
       {score && <span>Score: {score}</span>}
-      {date && <span>Date: {date}</span>}
     </div>
-    {actionLabel && (
-      <button className="mt-auto self-start flex items-center gap-1.5 text-sm font-medium text-primary 
-        hover:text-primary/80 active:scale-[0.97] transition-all">
+    {actionLabel && onAction && (
+      <button onClick={onAction}
+        className="mt-auto self-start flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 active:scale-[0.97] transition-all">
         <Play className="w-3.5 h-3.5" /> {actionLabel}
       </button>
     )}
