@@ -12,6 +12,7 @@ interface Question {
   question_type: string;
   marks: number;
   options: string[] | null;
+  correct_answer: string | null;
   language?: string | null;
   starter_code?: string | null;
   sort_order: number;
@@ -21,7 +22,7 @@ interface ExamEnvironmentProps {
   sessionId: string;
   testId: string;
   testName: string;
-  timeLimit: number; // in minutes
+  timeLimit: number;
   questions: Question[];
   isOpenBook: boolean;
   onComplete: () => void;
@@ -38,6 +39,7 @@ const ExamEnvironment = ({
   const [riskScore, setRiskScore] = useState(0);
   const riskRef = useRef(0);
   const sessionIdRef = useRef(sessionId);
+  const submittedRef = useRef(false);
 
   // Timer
   useEffect(() => {
@@ -45,7 +47,7 @@ const ExamEnvironment = ({
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timer);
-          handleSubmit();
+          if (!submittedRef.current) handleSubmit();
           return 0;
         }
         return prev - 1;
@@ -54,7 +56,6 @@ const ExamEnvironment = ({
     return () => clearInterval(timer);
   }, []);
 
-  // Format time
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -116,27 +117,44 @@ const ExamEnvironment = ({
       })
       .eq("id", sessionIdRef.current);
 
-    if (riskRef.current >= 50) {
+    if (riskRef.current >= 50 && !submittedRef.current) {
       toast.error("Exam terminated due to suspicious activity.");
       handleSubmit();
     }
   }, []);
 
   const handleSubmit = async () => {
+    if (submittedRef.current) return;
+    submittedRef.current = true;
     setSubmitting(true);
     try {
-      // Save all answers
-      const answerRows = questions.map(q => ({
-        session_id: sessionId,
-        question_id: q.id,
-        answer_text: answers[q.id] || "",
-        is_correct: q.question_type === "mcq" ? undefined : undefined,
-        marks_awarded: 0,
-      }));
+      // Auto-grade MCQ answers
+      const answerRows = questions.map(q => {
+        const studentAnswer = answers[q.id] || "";
+        const isCorrect = q.question_type === "mcq" && q.correct_answer
+          ? studentAnswer.trim().toLowerCase() === q.correct_answer.trim().toLowerCase()
+          : null;
+        const marksAwarded = isCorrect === true ? q.marks : isCorrect === false ? 0 : null;
+
+        return {
+          session_id: sessionId,
+          question_id: q.id,
+          answer_text: studentAnswer,
+          is_correct: isCorrect,
+          marks_awarded: marksAwarded ?? 0,
+        };
+      });
 
       await supabase.from("student_answers").insert(answerRows);
+
+      // Calculate total score for the session
+      const totalScore = answerRows.reduce((sum, a) => sum + (a.marks_awarded || 0), 0);
+
       await supabase.from("exam_sessions")
-        .update({ status: "completed", completed_at: new Date().toISOString() })
+        .update({
+          status: "completed",
+          completed_at: new Date().toISOString(),
+        })
         .eq("id", sessionId);
 
       if (document.fullscreenElement) {
@@ -145,6 +163,7 @@ const ExamEnvironment = ({
       onComplete();
     } catch (e: any) {
       toast.error("Failed to submit exam");
+      submittedRef.current = false;
     } finally {
       setSubmitting(false);
     }
@@ -183,7 +202,7 @@ const ExamEnvironment = ({
         <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
       </div>
 
-      {/* Risk indicator (subtle) */}
+      {/* Risk indicator */}
       {riskScore > 0 && (
         <div className="bg-warning/10 px-6 py-2 flex items-center gap-2 text-xs text-warning border-b border-warning/20">
           <AlertTriangle className="w-3.5 h-3.5" />
@@ -254,7 +273,6 @@ const ExamEnvironment = ({
           <ChevronLeft className="w-4 h-4" /> Previous
         </button>
 
-        {/* Question dots */}
         <div className="flex gap-1.5 flex-wrap justify-center max-w-[300px]">
           {questions.map((_, i) => (
             <button
