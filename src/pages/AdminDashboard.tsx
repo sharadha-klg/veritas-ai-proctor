@@ -3,16 +3,17 @@ import DashboardHeader from "@/components/DashboardHeader";
 import CreateTestForm from "@/components/CreateTestForm";
 import ResultsTab from "@/components/admin/ResultsTab";
 import AnalyticsTab from "@/components/admin/AnalyticsTab";
+import LiveMonitoringTab from "@/components/admin/LiveMonitoringTab";
 import { Navigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  Users, FileText, BarChart3, Plus, TrendingUp,
-  ToggleLeft, ToggleRight, Loader2, Trash2, Send
+  Users, FileText, BarChart3, Plus, TrendingUp, Radio,
+  ToggleLeft, ToggleRight, Loader2, Trash2
 } from "lucide-react";
 
-const tabs = ["Profile", "Tests", "Results", "Analytics"] as const;
+const tabs = ["Profile", "Tests", "Live", "Results", "Analytics"] as const;
 type Tab = typeof tabs[number];
 
 interface Test {
@@ -44,13 +45,14 @@ const AdminDashboard = () => {
           <CreateTestForm onBack={() => setShowCreate(false)} onCreated={() => setShowCreate(false)} />
         ) : (
           <>
-            <div className="flex gap-1 bg-muted rounded-xl p-1 mb-8 w-fit opacity-0 animate-fade-in">
+            <div className="flex gap-1 bg-muted rounded-xl p-1 mb-8 w-fit opacity-0 animate-fade-in overflow-x-auto">
               {tabs.map((t) => (
                 <button key={t} onClick={() => setTab(t)}
-                  className={`px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 active:scale-[0.97]
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 active:scale-[0.97] whitespace-nowrap
                     ${tab === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
                   {t === "Profile" && <Users className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
                   {t === "Tests" && <FileText className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
+                  {t === "Live" && <Radio className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
                   {t === "Results" && <BarChart3 className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
                   {t === "Analytics" && <TrendingUp className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
                   {t}
@@ -59,6 +61,7 @@ const AdminDashboard = () => {
             </div>
             {tab === "Profile" && <ProfileTab profile={profile} />}
             {tab === "Tests" && <TestsTab onCreateNew={() => setShowCreate(true)} userId={user.id} />}
+            {tab === "Live" && <LiveMonitoringTab userId={user.id} />}
             {tab === "Results" && <ResultsTab userId={user.id} />}
             {tab === "Analytics" && <AnalyticsTab userId={user.id} />}
           </>
