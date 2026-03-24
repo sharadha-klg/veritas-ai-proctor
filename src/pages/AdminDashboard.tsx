@@ -2,16 +2,17 @@ import { useAuth } from "@/context/AuthContext";
 import DashboardHeader from "@/components/DashboardHeader";
 import CreateTestForm from "@/components/CreateTestForm";
 import ResultsTab from "@/components/admin/ResultsTab";
+import AnalyticsTab from "@/components/admin/AnalyticsTab";
 import { Navigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  Users, FileText, BarChart3, Plus,
-  ToggleLeft, ToggleRight, Loader2, Trash2
+  Users, FileText, BarChart3, Plus, TrendingUp,
+  ToggleLeft, ToggleRight, Loader2, Trash2, Send
 } from "lucide-react";
 
-const tabs = ["Profile", "Tests", "Results"] as const;
+const tabs = ["Profile", "Tests", "Results", "Analytics"] as const;
 type Tab = typeof tabs[number];
 
 interface Test {
@@ -51,6 +52,7 @@ const AdminDashboard = () => {
                   {t === "Profile" && <Users className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
                   {t === "Tests" && <FileText className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
                   {t === "Results" && <BarChart3 className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
+                  {t === "Analytics" && <TrendingUp className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
                   {t}
                 </button>
               ))}
@@ -58,6 +60,7 @@ const AdminDashboard = () => {
             {tab === "Profile" && <ProfileTab profile={profile} />}
             {tab === "Tests" && <TestsTab onCreateNew={() => setShowCreate(true)} userId={user.id} />}
             {tab === "Results" && <ResultsTab userId={user.id} />}
+            {tab === "Analytics" && <AnalyticsTab userId={user.id} />}
           </>
         )}
       </main>
@@ -89,6 +92,7 @@ const ProfileTab = ({ profile }: { profile: any }) => (
 const TestsTab = ({ onCreateNew, userId }: { onCreateNew: () => void; userId: string }) => {
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activating, setActivating] = useState<string | null>(null);
 
   const fetchTests = useCallback(async () => {
     setLoading(true);
@@ -102,7 +106,31 @@ const TestsTab = ({ onCreateNew, userId }: { onCreateNew: () => void; userId: st
 
   useEffect(() => { fetchTests(); }, [fetchTests]);
 
+  const activateTest = async (test: Test) => {
+    setActivating(test.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("activate-test", {
+        body: { testId: test.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(data?.message || "Test activated!");
+      if (data?.notifications?.length > 0) {
+        toast.info(`Exam keys generated for ${data.notifications.length} students`);
+      }
+      fetchTests();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to activate test");
+    } finally {
+      setActivating(null);
+    }
+  };
+
   const toggleStatus = async (test: Test) => {
+    if (test.status === "draft") {
+      await activateTest(test);
+      return;
+    }
     const newStatus = test.status === "active" ? "draft" : "active";
     const { error } = await supabase.from("tests").update({ status: newStatus }).eq("id", test.id);
     if (error) toast.error("Failed to update status"); else fetchTests();
@@ -152,10 +180,16 @@ const TestsTab = ({ onCreateNew, userId }: { onCreateNew: () => void; userId: st
               </div>
               {t.topic && <p className="text-xs text-muted-foreground mb-3 truncate">Topic: {t.topic}</p>}
               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => toggleStatus(t)}
-                  className="flex items-center gap-1 text-xs text-foreground hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-muted">
-                  {t.status === "active" ? <ToggleRight className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}
-                  {t.status === "active" ? "Deactivate" : "Activate"}
+                <button onClick={() => toggleStatus(t)} disabled={activating === t.id}
+                  className="flex items-center gap-1 text-xs text-foreground hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-muted disabled:opacity-50">
+                  {activating === t.id ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : t.status === "active" ? (
+                    <ToggleRight className="w-3.5 h-3.5" />
+                  ) : (
+                    <ToggleLeft className="w-3.5 h-3.5" />
+                  )}
+                  {activating === t.id ? "Activating..." : t.status === "active" ? "Deactivate" : "Activate"}
                 </button>
                 <button onClick={() => deleteTest(t.id)}
                   className="flex items-center gap-1 text-xs text-destructive hover:text-destructive/80 transition-colors px-2 py-1 rounded-md hover:bg-muted">
