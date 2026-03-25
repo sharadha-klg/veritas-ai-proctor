@@ -261,6 +261,8 @@ export type Database = {
           id: string
           is_open_book: boolean
           name: string
+          scheduled_end: string | null
+          scheduled_start: string | null
           status: string
           time_limit: number
           topic: string | null
@@ -276,6 +278,8 @@ export type Database = {
           id?: string
           is_open_book?: boolean
           name: string
+          scheduled_end?: string | null
+          scheduled_start?: string | null
           status?: string
           time_limit?: number
           topic?: string | null
@@ -291,6 +295,8 @@ export type Database = {
           id?: string
           is_open_book?: boolean
           name?: string
+          scheduled_end?: string | null
+          scheduled_start?: string | null
           status?: string
           time_limit?: number
           topic?: string | null
