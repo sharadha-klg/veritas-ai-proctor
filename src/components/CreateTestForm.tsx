@@ -35,6 +35,8 @@ const CreateTestForm = ({ onBack, onCreated }: CreateTestFormProps) => {
   const [isOpenBook, setIsOpenBook] = useState(false);
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [topic, setTopic] = useState("");
+  const [scheduledStart, setScheduledStart] = useState("");
+  const [scheduledEnd, setScheduledEnd] = useState("");
 
   // Questions
   const [questions, setQuestions] = useState<Question[]>([]);
