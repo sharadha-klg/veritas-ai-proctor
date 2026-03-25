@@ -201,6 +201,19 @@ const CreateTestForm = ({ onBack, onCreated }: CreateTestFormProps) => {
             <span className="text-sm text-foreground">Open-book exam</span>
           </label>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Scheduled Start (optional)</label>
+              <input type="datetime-local" className={inputClass} value={scheduledStart} onChange={e => setScheduledStart(e.target.value)} />
+              <p className="text-xs text-muted-foreground mt-1">Auto-activates at this time</p>
+            </div>
+            <div>
+              <label className={labelClass}>Scheduled End (optional)</label>
+              <input type="datetime-local" className={inputClass} value={scheduledEnd} onChange={e => setScheduledEnd(e.target.value)} />
+              <p className="text-xs text-muted-foreground mt-1">Auto-deactivates at this time</p>
+            </div>
+          </div>
+
           <button onClick={handleDetailsNext}
             className="w-full py-3 rounded-lg gradient-bg-horizontal text-primary-foreground font-semibold hover:opacity-90 active:scale-[0.98] transition-all mt-2">
             Next: Add Questions
