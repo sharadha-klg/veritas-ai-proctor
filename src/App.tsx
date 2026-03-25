@@ -12,6 +12,7 @@ import AdminRegister from "./pages/AdminRegister";
 import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import TakeExam from "./pages/TakeExam";
+import StudentResults from "./pages/StudentResults";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/student/dashboard" element={<StudentDashboard />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/exam/:testId" element={<TakeExam />} />
+            <Route path="/student/results/:sessionId" element={<StudentResults />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

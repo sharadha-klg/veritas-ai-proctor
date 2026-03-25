@@ -35,6 +35,8 @@ const CreateTestForm = ({ onBack, onCreated }: CreateTestFormProps) => {
   const [isOpenBook, setIsOpenBook] = useState(false);
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [topic, setTopic] = useState("");
+  const [scheduledStart, setScheduledStart] = useState("");
+  const [scheduledEnd, setScheduledEnd] = useState("");
 
   // Questions
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -109,7 +111,9 @@ const CreateTestForm = ({ onBack, onCreated }: CreateTestFormProps) => {
         admin_id: user!.id,
         name, exam_type: examType, time_limit: timeLimit,
         total_marks: totalMarks, is_open_book: isOpenBook,
-        difficulty, topic, status: "draft",
+        difficulty, topic, status: scheduledStart ? "scheduled" : "draft",
+        scheduled_start: scheduledStart || null,
+        scheduled_end: scheduledEnd || null,
       }).select().single();
       if (testErr) throw testErr;
 
@@ -196,6 +200,19 @@ const CreateTestForm = ({ onBack, onCreated }: CreateTestFormProps) => {
               className="w-4 h-4 rounded border-border text-primary focus:ring-primary/40" />
             <span className="text-sm text-foreground">Open-book exam</span>
           </label>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Scheduled Start (optional)</label>
+              <input type="datetime-local" className={inputClass} value={scheduledStart} onChange={e => setScheduledStart(e.target.value)} />
+              <p className="text-xs text-muted-foreground mt-1">Auto-activates at this time</p>
+            </div>
+            <div>
+              <label className={labelClass}>Scheduled End (optional)</label>
+              <input type="datetime-local" className={inputClass} value={scheduledEnd} onChange={e => setScheduledEnd(e.target.value)} />
+              <p className="text-xs text-muted-foreground mt-1">Auto-deactivates at this time</p>
+            </div>
+          </div>
 
           <button onClick={handleDetailsNext}
             className="w-full py-3 rounded-lg gradient-bg-horizontal text-primary-foreground font-semibold hover:opacity-90 active:scale-[0.98] transition-all mt-2">
