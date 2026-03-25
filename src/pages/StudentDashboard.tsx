@@ -82,9 +82,11 @@ const StudentDashboard = () => {
               </Section>
             )}
 
-            <Section title="Completed Tests" icon={<CheckCircle2 className="w-5 h-5 text-success" />} delay={320}>
+        <Section title="Completed Tests" icon={<CheckCircle2 className="w-5 h-5 text-success" />} delay={320}>
               {completedSessions.length > 0 ? completedSessions.map(s => (
-                <TestCard key={s.id} name={(s as any).tests?.name || "Test"} timeLimit="" status="Completed" variant="completed" />
+                <TestCard key={s.id} name={(s as any).tests?.name || "Test"} timeLimit="" status="Completed" variant="completed"
+                  score={`${s.risk_score !== undefined ? `Risk: ${s.risk_score}%` : ""}`}
+                  actionLabel="View Results" onAction={() => navigate(`/student/results/${s.id}`)} />
               )) : (
                 <p className="text-sm text-muted-foreground col-span-2">No completed tests yet</p>
               )}
