@@ -111,7 +111,9 @@ const CreateTestForm = ({ onBack, onCreated }: CreateTestFormProps) => {
         admin_id: user!.id,
         name, exam_type: examType, time_limit: timeLimit,
         total_marks: totalMarks, is_open_book: isOpenBook,
-        difficulty, topic, status: "draft",
+        difficulty, topic, status: scheduledStart ? "scheduled" : "draft",
+        scheduled_start: scheduledStart || null,
+        scheduled_end: scheduledEnd || null,
       }).select().single();
       if (testErr) throw testErr;
 
