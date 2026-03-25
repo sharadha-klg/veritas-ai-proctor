@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Users, FileText, BarChart3, Plus, TrendingUp,
-  ToggleLeft, ToggleRight, Loader2, Trash2, Send
+  ToggleLeft, ToggleRight, Loader2, Trash2, Send, X, Copy, Check
 } from "lucide-react";
 
 const tabs = ["Profile", "Tests", "Results", "Analytics"] as const;
