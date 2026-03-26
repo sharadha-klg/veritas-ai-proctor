@@ -2,6 +2,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Shield, LogOut, User } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import NotificationBell from "./NotificationBell";
 
 const DashboardHeader = () => {
   const { profile, logout } = useAuth();
@@ -34,7 +35,9 @@ const DashboardHeader = () => {
         <span className="font-display font-bold text-primary-foreground text-lg">Veritas AI</span>
       </div>
 
-      <div className="relative" ref={ref}>
+      <div className="flex items-center gap-2">
+        {profile?.role === "student" && <NotificationBell />}
+        <div className="relative" ref={ref}>
         <button
           onClick={() => setOpen(!open)}
           className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center
@@ -66,6 +69,7 @@ const DashboardHeader = () => {
             </button>
           </div>
         )}
+        </div>
       </div>
     </header>
   );
