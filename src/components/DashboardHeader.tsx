@@ -69,6 +69,7 @@ const DashboardHeader = () => {
             </button>
           </div>
         )}
+        </div>
       </div>
     </header>
   );
