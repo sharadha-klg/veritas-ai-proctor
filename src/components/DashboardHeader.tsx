@@ -2,6 +2,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Shield, LogOut, User } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import NotificationBell from "./NotificationBell";
 
 const DashboardHeader = () => {
   const { profile, logout } = useAuth();
