@@ -18,7 +18,6 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify the calling user is an admin
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -27,7 +26,6 @@ serve(async (req) => {
 
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify admin role
     const { data: profile } = await serviceClient
       .from("profiles")
       .select("role")
@@ -38,7 +36,6 @@ serve(async (req) => {
     const { testId } = await req.json();
     if (!testId) throw new Error("testId is required");
 
-    // Verify test belongs to this admin
     const { data: test, error: testErr } = await serviceClient
       .from("tests")
       .select("*")
@@ -98,8 +95,34 @@ serve(async (req) => {
       .select("student_id, exam_key")
       .eq("test_id", testId);
 
-    // Build notification data
+    // Create in-app notifications for each student with their exam key
     const notifications = (createdSessions || []).map((session: any) => {
+      const student = students.find((s) => s.user_id === session.student_id);
+      return {
+        user_id: session.student_id,
+        title: `Exam Key for "${test.name}"`,
+        message: `Your exam key is: ${session.exam_key}. Use this key to start the exam.`,
+        type: "exam_key",
+        metadata: {
+          test_id: testId,
+          test_name: test.name,
+          exam_key: session.exam_key,
+          time_limit: test.time_limit,
+        },
+      };
+    });
+
+    if (notifications.length > 0) {
+      const { error: notifErr } = await serviceClient
+        .from("notifications")
+        .insert(notifications);
+      if (notifErr) {
+        console.error("Failed to create notifications:", notifErr);
+      }
+    }
+
+    // Build response data
+    const responseNotifications = (createdSessions || []).map((session: any) => {
       const student = students.find((s) => s.user_id === session.student_id);
       return {
         email: student?.email,
@@ -108,19 +131,14 @@ serve(async (req) => {
       };
     });
 
-    // Use Lovable AI to generate a summary email notification (logged for now)
-    console.log(`Test "${test.name}" activated. ${notifications.length} students notified.`);
-    console.log("Exam keys generated:", notifications.map((n: any) => ({
-      email: n.email,
-      key: n.exam_key,
-    })));
+    console.log(`Test "${test.name}" activated. ${responseNotifications.length} students notified.`);
 
     return new Response(JSON.stringify({
       success: true,
-      message: `Test activated! ${newSessions.length} new exam sessions created.`,
+      message: `Test activated! ${newSessions.length} new exam sessions created. ${notifications.length} students notified.`,
       sessions_created: newSessions.length,
       total_students: students.length,
-      notifications,
+      notifications: responseNotifications,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
