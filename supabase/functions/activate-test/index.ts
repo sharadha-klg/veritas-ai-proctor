@@ -175,8 +175,6 @@ serve(async (req) => {
       const student = students.find((s) => s.user_id === session.student_id);
       if (!student?.email) return Promise.resolve();
       return sendEmail(
-        supabaseUrl,
-        anonKey,
         student.email,
         `🔑 Exam Key for "${test.name}" — Veritas AI`,
         examKeyEmailHtml(student.full_name || "Student", test.name, session.exam_key, test.time_limit),
