@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import nodemailer from "npm:nodemailer@6.9.12";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,14 +8,22 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-async function sendEmail(supabaseUrl: string, anonKey: string, to: string, subject: string, html: string, toName?: string) {
+async function sendEmail(to: string, subject: string, html: string, toName?: string) {
   try {
-    const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${anonKey}` },
-      body: JSON.stringify({ to, subject, html, toName }),
+    const smtpEmail = Deno.env.get("SMTP_EMAIL");
+    const smtpPassword = Deno.env.get("SMTP_PASSWORD");
+    if (!smtpEmail || !smtpPassword) { console.error("SMTP not configured"); return; }
+
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com", port: 465, secure: true,
+      auth: { user: smtpEmail, pass: smtpPassword },
     });
-    if (!res.ok) console.error("Email send failed:", await res.text());
+    await transporter.sendMail({
+      from: `"Veritas AI" <${smtpEmail}>`,
+      to: toName ? `"${toName}" <${to}>` : to,
+      subject, html,
+    });
+    console.log(`Email sent to ${to}`);
   } catch (e) {
     console.error("Email send error:", e);
   }
@@ -166,8 +175,6 @@ serve(async (req) => {
       const student = students.find((s) => s.user_id === session.student_id);
       if (!student?.email) return Promise.resolve();
       return sendEmail(
-        supabaseUrl,
-        anonKey,
         student.email,
         `🔑 Exam Key for "${test.name}" — Veritas AI`,
         examKeyEmailHtml(student.full_name || "Student", test.name, session.exam_key, test.time_limit),

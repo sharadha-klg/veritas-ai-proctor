@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
+import nodemailer from "npm:nodemailer@6.9.12";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,7 +16,7 @@ function completionEmailHtml(studentName: string, testName: string) {
     </div>
     <div style="padding: 32px;">
       <p style="font-size: 16px; margin: 0 0 16px;">Hi <strong>${studentName}</strong>,</p>
-      <p style="font-size: 14px; color: #a1a1aa; margin: 0 0 24px;">You have successfully completed and submitted your exam. Here's a summary:</p>
+      <p style="font-size: 14px; color: #a1a1aa; margin: 0 0 24px;">You have successfully completed and submitted your exam.</p>
       <div style="background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
         <p style="font-size: 12px; color: #71717a; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 1px;">Exam Name</p>
         <p style="font-size: 20px; font-weight: 600; margin: 0 0 16px; color: #e4e4e7;">${testName}</p>
@@ -25,10 +25,7 @@ function completionEmailHtml(studentName: string, testName: string) {
         </div>
       </div>
       <div style="background: #1c1917; border: 1px solid #292524; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
-        <p style="font-size: 13px; color: #a8a29e; margin: 0;">📋 Your answers have been recorded and will be evaluated. You'll be able to view your results on the dashboard once they're published.</p>
-      </div>
-      <div style="text-align: center; margin: 24px 0;">
-        <a href="#" style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 600; font-size: 15px;">View Dashboard →</a>
+        <p style="font-size: 13px; color: #a8a29e; margin: 0;">📋 Your answers have been recorded and will be evaluated. Results will be available on your dashboard.</p>
       </div>
     </div>
     <div style="padding: 16px 32px; background: #09090b; text-align: center; border-top: 1px solid #18181b;">
@@ -48,23 +45,19 @@ serve(async (req) => {
     const { email, name, testName } = await req.json();
     if (!email || !testName) throw new Error("Missing required fields: email, testName");
 
-    const client = new SmtpClient();
-    await client.connectTLS({
-      hostname: "smtp.gmail.com",
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
       port: 465,
-      username: smtpEmail,
-      password: smtpPassword,
+      secure: true,
+      auth: { user: smtpEmail, pass: smtpPassword },
     });
 
-    await client.send({
-      from: `Veritas AI <${smtpEmail}>`,
-      to: name ? `${name} <${email}>` : email,
+    await transporter.sendMail({
+      from: `"Veritas AI" <${smtpEmail}>`,
+      to: name ? `"${name}" <${email}>` : email,
       subject: `✅ Exam "${testName}" Submitted Successfully — Veritas AI`,
-      content: "",
       html: completionEmailHtml(name || "Student", testName),
     });
-
-    await client.close();
 
     console.log(`Completion email sent to ${email} for test "${testName}"`);
     return new Response(JSON.stringify({ success: true }), {
