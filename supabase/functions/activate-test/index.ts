@@ -7,6 +7,46 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+async function sendEmail(supabaseUrl: string, anonKey: string, to: string, subject: string, html: string, toName?: string) {
+  try {
+    const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${anonKey}` },
+      body: JSON.stringify({ to, subject, html, toName }),
+    });
+    if (!res.ok) console.error("Email send failed:", await res.text());
+  } catch (e) {
+    console.error("Email send error:", e);
+  }
+}
+
+function examKeyEmailHtml(studentName: string, testName: string, examKey: string, timeLimit: number) {
+  return `
+  <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0a0f; color: #e4e4e7; border-radius: 16px; overflow: hidden;">
+    <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 32px; text-align: center;">
+      <h1 style="margin: 0; font-size: 24px; color: white;">🔑 Your Exam Key</h1>
+      <p style="margin: 8px 0 0; color: rgba(255,255,255,0.85); font-size: 14px;">Veritas AI Examination Platform</p>
+    </div>
+    <div style="padding: 32px;">
+      <p style="font-size: 16px; margin: 0 0 16px;">Hi <strong>${studentName}</strong>,</p>
+      <p style="font-size: 14px; color: #a1a1aa; margin: 0 0 24px;">A new exam has been activated for you. Use the key below to start your exam.</p>
+      <div style="background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+        <p style="font-size: 12px; color: #71717a; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 1px;">Exam Name</p>
+        <p style="font-size: 18px; font-weight: 600; margin: 0 0 20px; color: #e4e4e7;">${testName}</p>
+        <p style="font-size: 12px; color: #71717a; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 1px;">Your Exam Key</p>
+        <p style="font-size: 28px; font-weight: 700; margin: 0; color: #818cf8; font-family: monospace; letter-spacing: 4px;">${examKey}</p>
+      </div>
+      <div style="background: #1c1917; border: 1px solid #292524; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+        <p style="font-size: 13px; color: #a8a29e; margin: 0;">⏱ <strong>Time Limit:</strong> ${timeLimit} minutes</p>
+      </div>
+      <p style="font-size: 13px; color: #71717a; margin: 0;">Keep this key secure. Do not share it with anyone.</p>
+    </div>
+    <div style="padding: 16px 32px; background: #09090b; text-align: center; border-top: 1px solid #18181b;">
+      <p style="font-size: 11px; color: #52525b; margin: 0;">© Veritas AI — Secure Examination Platform</p>
+    </div>
+  </div>`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -121,6 +161,21 @@ serve(async (req) => {
       }
     }
 
+    // Send emails with exam keys to all students
+    const emailPromises = (createdSessions || []).map((session: any) => {
+      const student = students.find((s) => s.user_id === session.student_id);
+      if (!student?.email) return Promise.resolve();
+      return sendEmail(
+        supabaseUrl,
+        anonKey,
+        student.email,
+        `🔑 Exam Key for "${test.name}" — Veritas AI`,
+        examKeyEmailHtml(student.full_name || "Student", test.name, session.exam_key, test.time_limit),
+        student.full_name
+      );
+    });
+    await Promise.allSettled(emailPromises);
+
     // Build response data
     const responseNotifications = (createdSessions || []).map((session: any) => {
       const student = students.find((s) => s.user_id === session.student_id);
@@ -131,11 +186,11 @@ serve(async (req) => {
       };
     });
 
-    console.log(`Test "${test.name}" activated. ${responseNotifications.length} students notified.`);
+    console.log(`Test "${test.name}" activated. ${responseNotifications.length} students notified via app + email.`);
 
     return new Response(JSON.stringify({
       success: true,
-      message: `Test activated! ${newSessions.length} new exam sessions created. ${notifications.length} students notified.`,
+      message: `Test activated! ${newSessions.length} new sessions. ${notifications.length} students notified via app & email.`,
       sessions_created: newSessions.length,
       total_students: students.length,
       notifications: responseNotifications,
