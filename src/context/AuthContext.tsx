@@ -93,6 +93,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       password,
       options: { data: metadata },
     });
+    if (!error) {
+      // Send welcome email (fire-and-forget)
+      supabase.functions.invoke("welcome-email", {
+        body: {
+          email,
+          name: metadata.full_name || "User",
+          role: metadata.role || "student",
+        },
+      }).catch((e) => console.error("Welcome email failed:", e));
+    }
     return { error: error?.message ?? null };
   };
 

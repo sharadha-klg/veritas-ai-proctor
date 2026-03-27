@@ -139,6 +139,25 @@ const ExamEnvironment = ({
         .update({ status: "completed", completed_at: new Date().toISOString() })
         .eq("id", sessionId);
 
+      // Send completion email (fire-and-forget)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, email")
+          .eq("user_id", user.id)
+          .single();
+        if (profile) {
+          supabase.functions.invoke("exam-completed-email", {
+            body: {
+              email: profile.email,
+              name: profile.full_name,
+              testName,
+            },
+          }).catch((e) => console.error("Completion email failed:", e));
+        }
+      }
+
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }
