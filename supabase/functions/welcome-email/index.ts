@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
+import nodemailer from "npm:nodemailer@6.9.12";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,9 +34,6 @@ function welcomeEmailHtml(name: string, role: string) {
           ${features}
         </ul>
       </div>
-      <div style="text-align: center; margin: 32px 0;">
-        <a href="#" style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 600; font-size: 15px;">Go to Dashboard →</a>
-      </div>
       <p style="font-size: 13px; color: #71717a; margin: 0; text-align: center;">If you have any questions, feel free to reach out to us.</p>
     </div>
     <div style="padding: 16px 32px; background: #09090b; text-align: center; border-top: 1px solid #18181b;">
@@ -57,23 +53,19 @@ serve(async (req) => {
     const { email, name, role } = await req.json();
     if (!email || !name) throw new Error("Missing required fields: email, name");
 
-    const client = new SmtpClient();
-    await client.connectTLS({
-      hostname: "smtp.gmail.com",
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
       port: 465,
-      username: smtpEmail,
-      password: smtpPassword,
+      secure: true,
+      auth: { user: smtpEmail, pass: smtpPassword },
     });
 
-    await client.send({
-      from: `Veritas AI <${smtpEmail}>`,
-      to: `${name} <${email}>`,
+    await transporter.sendMail({
+      from: `"Veritas AI" <${smtpEmail}>`,
+      to: `"${name}" <${email}>`,
       subject: "🎉 Welcome to Veritas AI — Your Secure Exam Platform",
-      content: "",
       html: welcomeEmailHtml(name, role || "student"),
     });
-
-    await client.close();
 
     console.log(`Welcome email sent to ${email}`);
     return new Response(JSON.stringify({ success: true }), {

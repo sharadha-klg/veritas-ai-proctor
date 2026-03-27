@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
+import nodemailer from "npm:nodemailer@6.9.12";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,23 +25,19 @@ serve(async (req) => {
     const { to, subject, html, toName } = await req.json() as EmailRequest;
     if (!to || !subject || !html) throw new Error("Missing required fields: to, subject, html");
 
-    const client = new SmtpClient();
-    await client.connectTLS({
-      hostname: "smtp.gmail.com",
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
       port: 465,
-      username: smtpEmail,
-      password: smtpPassword,
+      secure: true,
+      auth: { user: smtpEmail, pass: smtpPassword },
     });
 
-    await client.send({
-      from: `Veritas AI <${smtpEmail}>`,
-      to: toName ? `${toName} <${to}>` : to,
+    await transporter.sendMail({
+      from: `"Veritas AI" <${smtpEmail}>`,
+      to: toName ? `"${toName}" <${to}>` : to,
       subject,
-      content: "",
       html,
     });
-
-    await client.close();
 
     console.log(`Email sent to ${to}: ${subject}`);
     return new Response(JSON.stringify({ success: true }), {
