@@ -19,36 +19,55 @@ const TakeExam = () => {
   const [test, setTest] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [assignedKey, setAssignedKey] = useState<string | null>(null);
   const [loadingTest, setLoadingTest] = useState(true);
 
   useEffect(() => {
     if (!testId || !user) return;
+
     const fetchTest = async () => {
-      const { data, error } = await supabase
-        .from("tests")
-        .select("*")
-        .eq("id", testId)
-        .single();
-      if (error || !data) {
+      const [{ data: testData, error: testError }, { data: questionData }, { data: studentSession }] = await Promise.all([
+        supabase.from("tests").select("*").eq("id", testId).single(),
+        supabase.from("questions").select("*").eq("test_id", testId).order("sort_order", { ascending: true }),
+        supabase
+          .from("exam_sessions")
+          .select("id, exam_key, status")
+          .eq("test_id", testId)
+          .eq("student_id", user.id)
+          .maybeSingle(),
+      ]);
+
+      if (testError || !testData) {
         toast.error("Test not found");
         navigate("/student/dashboard");
         return;
       }
-      setTest(data);
 
-      const { data: qs } = await supabase
-        .from("questions")
-        .select("*")
-        .eq("test_id", testId)
-        .order("sort_order", { ascending: true });
-      setQuestions(qs || []);
+      setTest(testData);
+      setQuestions(questionData || []);
+
+      if (studentSession) {
+        setSessionId(studentSession.id);
+        setAssignedKey(studentSession.exam_key);
+
+        if (studentSession.status === "in_progress") {
+          setStage("exam");
+        }
+      }
+
       setLoadingTest(false);
     };
+
     fetchTest();
   }, [testId, user, navigate]);
 
-  if (loading || (user && !profile)) return <div className="min-h-screen gradient-bg flex items-center justify-center text-primary-foreground">Loading...</div>;
-  if (!user || profile?.role !== "student") return <Navigate to="/student/login" />;
+  if (loading || (user && !profile)) {
+    return <div className="min-h-screen gradient-bg flex items-center justify-center text-primary-foreground">Loading...</div>;
+  }
+
+  if (!user || profile?.role !== "student") {
+    return <Navigate to="/student/login" />;
+  }
 
   if (loadingTest) {
     return (
@@ -59,7 +78,6 @@ const TakeExam = () => {
   }
 
   const handleVerifyKey = async (key: string): Promise<boolean> => {
-    // Check if a session exists with this key for this test and student
     const { data: existing } = await supabase
       .from("exam_sessions")
       .select("*")
@@ -70,11 +88,11 @@ const TakeExam = () => {
 
     if (existing) {
       setSessionId(existing.id);
+      setAssignedKey(existing.exam_key);
       setStage("checks");
       return true;
     }
 
-    // Create a new session if key matches any pending session for this test
     const { data: session } = await supabase
       .from("exam_sessions")
       .select("*")
@@ -85,6 +103,7 @@ const TakeExam = () => {
 
     if (session) {
       setSessionId(session.id);
+      setAssignedKey(session.exam_key);
       setStage("checks");
       return true;
     }
@@ -94,7 +113,8 @@ const TakeExam = () => {
 
   const handleSystemChecksPassed = async (results: Record<string, boolean>) => {
     if (sessionId) {
-      await supabase.from("exam_sessions")
+      await supabase
+        .from("exam_sessions")
         .update({
           system_checks: results,
           status: "in_progress",
@@ -103,7 +123,6 @@ const TakeExam = () => {
         .eq("id", sessionId);
     }
 
-    // Enter fullscreen
     try {
       await document.documentElement.requestFullscreen();
     } catch {}
@@ -126,8 +145,10 @@ const TakeExam = () => {
           </div>
           <h1 className="text-2xl font-display font-bold text-foreground mb-2">Exam Submitted</h1>
           <p className="text-sm text-muted-foreground mb-6">Your answers have been recorded. You'll receive your results soon.</p>
-          <button onClick={() => navigate("/student/dashboard")}
-            className="px-6 py-3 rounded-lg gradient-bg-horizontal text-primary-foreground text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all">
+          <button
+            onClick={() => navigate("/student/dashboard")}
+            className="px-6 py-3 rounded-lg gradient-bg-horizontal text-primary-foreground text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all"
+          >
             Back to Dashboard
           </button>
         </div>
@@ -139,6 +160,7 @@ const TakeExam = () => {
     return (
       <ExamKeyEntry
         testName={test?.name || "Exam"}
+        assignedKey={assignedKey}
         onVerify={handleVerifyKey}
         onBack={() => navigate("/student/dashboard")}
       />
