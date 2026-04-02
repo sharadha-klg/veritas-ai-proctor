@@ -61,8 +61,13 @@ const TakeExam = () => {
     fetchTest();
   }, [testId, user, navigate]);
 
-  if (loading || (user && !profile)) return <div className="min-h-screen gradient-bg flex items-center justify-center text-primary-foreground">Loading...</div>;
-  if (!user || profile?.role !== "student") return <Navigate to="/student/login" />;
+  if (loading || (user && !profile)) {
+    return <div className="min-h-screen gradient-bg flex items-center justify-center text-primary-foreground">Loading...</div>;
+  }
+
+  if (!user || profile?.role !== "student") {
+    return <Navigate to="/student/login" />;
+  }
 
   if (loadingTest) {
     return (
@@ -140,8 +145,10 @@ const TakeExam = () => {
           </div>
           <h1 className="text-2xl font-display font-bold text-foreground mb-2">Exam Submitted</h1>
           <p className="text-sm text-muted-foreground mb-6">Your answers have been recorded. You'll receive your results soon.</p>
-          <button onClick={() => navigate("/student/dashboard")}
-            className="px-6 py-3 rounded-lg gradient-bg-horizontal text-primary-foreground text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all">
+          <button
+            onClick={() => navigate("/student/dashboard")}
+            className="px-6 py-3 rounded-lg gradient-bg-horizontal text-primary-foreground text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all"
+          >
             Back to Dashboard
           </button>
         </div>
@@ -187,4 +194,3 @@ const TakeExam = () => {
 };
 
 export default TakeExam;
-
