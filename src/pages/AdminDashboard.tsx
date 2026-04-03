@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Users, FileText, BarChart3, Plus, TrendingUp,
-  ToggleLeft, ToggleRight, Loader2, Trash2, X, Copy, Check, KeyRound
+  ToggleLeft, ToggleRight, Loader2, Trash2
 } from "lucide-react";
 
 const tabs = ["Profile", "Tests", "Results", "Analytics"] as const;
@@ -89,69 +89,10 @@ const ProfileTab = ({ profile }: { profile: any }) => (
   </div>
 );
 
-const ExamKeysModal = ({ keys, onClose }: { keys: { email: string; name: string; exam_key: string }[]; onClose: () => void }) => {
-  const [copied, setCopied] = useState<string | null>(null);
-
-  const copyKey = (key: string) => {
-    navigator.clipboard.writeText(key);
-    setCopied(key);
-    setTimeout(() => setCopied(null), 1500);
-  };
-
-  const copyAll = () => {
-    const text = keys.map(k => `${k.name || k.email}: ${k.exam_key}`).join("\n");
-    navigator.clipboard.writeText(text);
-    toast.success("All keys copied!");
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-card border border-border rounded-2xl shadow-lg w-full max-w-lg mx-4 max-h-[80vh] flex flex-col opacity-0 animate-fade-in" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-              <KeyRound className="w-4.5 h-4.5 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground text-sm">Exam Keys Generated</h3>
-              <p className="text-xs text-muted-foreground">{keys.length} student{keys.length !== 1 ? "s" : ""}</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-            <X className="w-4 h-4 text-muted-foreground" />
-          </button>
-        </div>
-        <div className="overflow-y-auto flex-1 p-4 space-y-2">
-          {keys.map((k) => (
-            <div key={k.exam_key} className="flex items-center justify-between bg-muted/50 rounded-lg px-4 py-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground truncate">{k.name || "—"}</p>
-                <p className="text-xs text-muted-foreground truncate">{k.email}</p>
-              </div>
-              <div className="flex items-center gap-2 ml-3">
-                <code className="text-xs font-mono bg-background px-2.5 py-1 rounded-md border border-border text-foreground">{k.exam_key}</code>
-                <button onClick={() => copyKey(k.exam_key)} className="p-1.5 rounded-md hover:bg-background transition-colors">
-                  {copied === k.exam_key ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground" />}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="p-4 border-t border-border">
-          <button onClick={copyAll} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-            <Copy className="w-4 h-4" /> Copy All Keys
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const TestsTab = ({ onCreateNew, userId }: { onCreateNew: () => void; userId: string }) => {
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState<string | null>(null);
-  const [examKeys, setExamKeys] = useState<{ email: string; name: string; exam_key: string }[] | null>(null);
 
   const fetchTests = useCallback(async () => {
     setLoading(true);
@@ -174,9 +115,6 @@ const TestsTab = ({ onCreateNew, userId }: { onCreateNew: () => void; userId: st
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast.success(data?.message || "Test activated!");
-      if (data?.notifications?.length > 0) {
-        setExamKeys(data.notifications);
-      }
       fetchTests();
     } catch (e: any) {
       toast.error(e.message || "Failed to activate test");
@@ -207,7 +145,6 @@ const TestsTab = ({ onCreateNew, userId }: { onCreateNew: () => void; userId: st
 
   return (
     <div className="opacity-0 animate-fade-in" style={{ animationDelay: "100ms" }}>
-      {examKeys && <ExamKeysModal keys={examKeys} onClose={() => setExamKeys(null)} />}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-display font-bold text-foreground">Manage Tests</h2>
         <button onClick={onCreateNew}

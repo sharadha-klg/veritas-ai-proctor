@@ -1,10 +1,9 @@
 import { useAuth } from "@/context/AuthContext";
 import DashboardHeader from "@/components/DashboardHeader";
-import { Clock, CheckCircle2, CalendarClock, Play, Loader2, Copy, Check } from "lucide-react";
+import { Clock, CheckCircle2, CalendarClock, Play, Loader2 } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 const StudentDashboard = () => {
   const { user, profile, loading } = useAuth();
@@ -43,11 +42,6 @@ const StudentDashboard = () => {
     navigate(`/exam/${testId}`);
   };
 
-  const handleCopyKey = async (key: string) => {
-    await navigator.clipboard.writeText(key);
-    toast.success("Exam key copied");
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader />
@@ -67,8 +61,6 @@ const StudentDashboard = () => {
               <Section title="Ongoing Tests" icon={<Clock className="w-5 h-5 text-warning" />} delay={160}>
                 {ongoingTests.map(t => (
                   <TestCard key={t.id} name={t.name} timeLimit={`${t.time_limit} min`} status="In Progress" variant="ongoing"
-                    examKey={sessionByTestId.get(t.id)?.exam_key}
-                    onCopyKey={handleCopyKey}
                     actionLabel="Continue" onAction={() => handleStartTest(t.id)} />
                 ))}
               </Section>
@@ -78,8 +70,7 @@ const StudentDashboard = () => {
               <Section title="Available Tests" icon={<Play className="w-5 h-5 text-primary" />} delay={200}>
                 {activeTests.map(t => (
                   <TestCard key={t.id} name={t.name} timeLimit={`${t.time_limit} min`} status="Active"
-                    examKey={sessionByTestId.get(t.id)?.exam_key}
-                    onCopyKey={handleCopyKey}
+                    note="Use the private exam key sent to your email to access this test."
                     variant="upcoming" actionLabel="Start Test" onAction={() => handleStartTest(t.id)} />
                 ))}
               </Section>
@@ -119,16 +110,7 @@ const Section = ({ title, icon, delay, children }: { title: string; icon: React.
   </div>
 );
 
-const TestCard = ({ name, timeLimit, status, score, actionLabel, variant, onAction, examKey, onCopyKey }: any) => {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    if (!examKey || !onCopyKey) return;
-    await onCopyKey(examKey);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
-  };
-
+const TestCard = ({ name, timeLimit, status, score, note, actionLabel, variant, onAction }: any) => {
   return (
     <div className="bg-card rounded-xl border border-border p-5 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
@@ -145,22 +127,7 @@ const TestCard = ({ name, timeLimit, status, score, actionLabel, variant, onActi
         {timeLimit && <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{timeLimit}</span>}
         {score && <span>{score}</span>}
       </div>
-      {examKey && (
-        <div className="rounded-lg border border-border bg-muted/50 px-3 py-2">
-          <p className="text-[11px] font-medium text-muted-foreground mb-1">Exam key</p>
-          <div className="flex items-center justify-between gap-2">
-            <code className="text-sm font-mono tracking-[0.2em] text-foreground">{examKey}</code>
-            <button
-              onClick={handleCopy}
-              className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted transition-colors"
-              type="button"
-            >
-              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? "Copied" : "Copy"}
-            </button>
-          </div>
-        </div>
-      )}
+      {note && <p className="text-xs text-muted-foreground leading-relaxed">{note}</p>}
       {actionLabel && onAction && (
         <button onClick={onAction}
           className="mt-auto self-start flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 active:scale-[0.97] transition-all">

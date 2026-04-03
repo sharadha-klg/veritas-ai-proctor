@@ -19,7 +19,6 @@ const TakeExam = () => {
   const [test, setTest] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [assignedKey, setAssignedKey] = useState<string | null>(null);
   const [loadingTest, setLoadingTest] = useState(true);
 
   useEffect(() => {
@@ -31,7 +30,7 @@ const TakeExam = () => {
         supabase.from("questions").select("*").eq("test_id", testId).order("sort_order", { ascending: true }),
         supabase
           .from("exam_sessions")
-          .select("id, exam_key, status")
+          .select("id, status")
           .eq("test_id", testId)
           .eq("student_id", user.id)
           .maybeSingle(),
@@ -48,7 +47,6 @@ const TakeExam = () => {
 
       if (studentSession) {
         setSessionId(studentSession.id);
-        setAssignedKey(studentSession.exam_key);
 
         if (studentSession.status === "in_progress") {
           setStage("exam");
@@ -78,33 +76,17 @@ const TakeExam = () => {
   }
 
   const handleVerifyKey = async (key: string): Promise<boolean> => {
-    const { data: existing } = await supabase
+    const { data: session } = await supabase
       .from("exam_sessions")
-      .select("*")
+      .select("id, status")
       .eq("test_id", testId!)
       .eq("student_id", user.id)
       .eq("exam_key", key)
-      .single();
-
-    if (existing) {
-      setSessionId(existing.id);
-      setAssignedKey(existing.exam_key);
-      setStage("checks");
-      return true;
-    }
-
-    const { data: session } = await supabase
-      .from("exam_sessions")
-      .select("*")
-      .eq("test_id", testId!)
-      .eq("exam_key", key)
-      .eq("status", "pending")
-      .single();
+      .maybeSingle();
 
     if (session) {
       setSessionId(session.id);
-      setAssignedKey(session.exam_key);
-      setStage("checks");
+      setStage(session.status === "in_progress" ? "exam" : "checks");
       return true;
     }
 
@@ -160,7 +142,6 @@ const TakeExam = () => {
     return (
       <ExamKeyEntry
         testName={test?.name || "Exam"}
-        assignedKey={assignedKey}
         onVerify={handleVerifyKey}
         onBack={() => navigate("/student/dashboard")}
       />

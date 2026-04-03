@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, KeyRound, X, Check } from "lucide-react";
+import { Bell, KeyRound, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -71,11 +71,6 @@ const NotificationBell = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
   };
 
-  const copyKey = (key: string) => {
-    navigator.clipboard.writeText(key);
-    toast.success("Exam key copied!");
-  };
-
   const timeAgo = (date: string) => {
     const diff = Date.now() - new Date(date).getTime();
     const mins = Math.floor(diff / 60000);
@@ -134,20 +129,7 @@ const NotificationBell = () => {
                         <p className="text-sm font-medium text-foreground truncate">{n.title}</p>
                         <span className="text-[10px] text-muted-foreground flex-shrink-0">{timeAgo(n.created_at)}</span>
                       </div>
-                      {n.type === "exam_key" && n.metadata?.exam_key && (
-                        <div className="mt-1.5 flex items-center gap-2">
-                          <code className="text-xs font-mono bg-muted px-2 py-1 rounded-md border border-border text-foreground">
-                            {n.metadata.exam_key}
-                          </code>
-                          <button
-                            onClick={() => copyKey(n.metadata.exam_key)}
-                            className="p-1 rounded-md hover:bg-muted transition-colors"
-                            title="Copy key"
-                          >
-                            <Check className="w-3 h-3 text-muted-foreground" />
-                          </button>
-                        </div>
-                      )}
+                      {n.message && <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{n.message}</p>}
                       {n.metadata?.time_limit && (
                         <p className="text-xs text-muted-foreground mt-1">{n.metadata.time_limit} min time limit</p>
                       )}
