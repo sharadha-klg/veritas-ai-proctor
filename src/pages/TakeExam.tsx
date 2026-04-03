@@ -20,14 +20,15 @@ const TakeExam = () => {
   const [questions, setQuestions] = useState<any[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loadingTest, setLoadingTest] = useState(true);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [resendingKey, setResendingKey] = useState(false);
 
   useEffect(() => {
     if (!testId || !user) return;
 
     const fetchTest = async () => {
-      const [{ data: testData, error: testError }, { data: questionData }, { data: studentSession }] = await Promise.all([
+      const [{ data: testData, error: testError }, { data: studentSession }] = await Promise.all([
         supabase.from("tests").select("*").eq("id", testId).single(),
-        supabase.from("questions").select("*").eq("test_id", testId).order("sort_order", { ascending: true }),
         supabase
           .from("exam_sessions")
           .select("id, status")
@@ -43,7 +44,6 @@ const TakeExam = () => {
       }
 
       setTest(testData);
-      setQuestions(questionData || []);
 
       if (studentSession) {
         setSessionId(studentSession.id);
@@ -58,6 +58,39 @@ const TakeExam = () => {
 
     fetchTest();
   }, [testId, user, navigate]);
+
+  useEffect(() => {
+    if (stage !== "exam" || !testId || questions.length > 0) return;
+
+    let cancelled = false;
+
+    const fetchQuestions = async () => {
+      setLoadingQuestions(true);
+      const { data, error } = await supabase
+        .from("questions")
+        .select("*")
+        .eq("test_id", testId)
+        .order("sort_order", { ascending: true });
+
+      if (cancelled) return;
+
+      if (error) {
+        toast.error("Failed to load exam questions");
+        navigate("/student/dashboard");
+        setLoadingQuestions(false);
+        return;
+      }
+
+      setQuestions(data || []);
+      setLoadingQuestions(false);
+    };
+
+    fetchQuestions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [stage, testId, questions.length, navigate]);
 
   if (loading || (user && !profile)) {
     return <div className="min-h-screen gradient-bg flex items-center justify-center text-primary-foreground">Loading...</div>;
@@ -116,6 +149,26 @@ const TakeExam = () => {
     setStage("complete");
   };
 
+  const handleResendKey = async () => {
+    if (!testId) return;
+
+    setResendingKey(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("resend-exam-key", {
+        body: { testId },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success(data?.message || "Exam key sent to your registered email address");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to resend exam key");
+    } finally {
+      setResendingKey(false);
+    }
+  };
+
   if (stage === "complete") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
@@ -143,6 +196,8 @@ const TakeExam = () => {
       <ExamKeyEntry
         testName={test?.name || "Exam"}
         onVerify={handleVerifyKey}
+        onResendKey={handleResendKey}
+        isResending={resendingKey}
         onBack={() => navigate("/student/dashboard")}
       />
     );
@@ -158,6 +213,14 @@ const TakeExam = () => {
   }
 
   if (stage === "exam" && sessionId) {
+    if (loadingQuestions) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      );
+    }
+
     return (
       <ExamEnvironment
         sessionId={sessionId}

@@ -4,10 +4,12 @@ import { KeyRound, ArrowLeft, Loader2 } from "lucide-react";
 interface ExamKeyEntryProps {
   testName: string;
   onVerify: (key: string) => Promise<boolean>;
+  onResendKey?: () => Promise<void>;
+  isResending?: boolean;
   onBack: () => void;
 }
 
-const ExamKeyEntry = ({ testName, onVerify, onBack }: ExamKeyEntryProps) => {
+const ExamKeyEntry = ({ testName, onVerify, onResendKey, isResending = false, onBack }: ExamKeyEntryProps) => {
   const [key, setKey] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState("");
@@ -50,6 +52,16 @@ const ExamKeyEntry = ({ testName, onVerify, onBack }: ExamKeyEntryProps) => {
             className="w-full mt-4 py-3 rounded-lg gradient-bg-horizontal text-primary-foreground text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-2">
             {verifying ? <><Loader2 className="w-4 h-4 animate-spin" /> Verifying...</> : "Verify & Continue"}
           </button>
+          {onResendKey && (
+            <button
+              type="button"
+              onClick={onResendKey}
+              disabled={isResending}
+              className="w-full mt-3 py-3 rounded-lg border border-border bg-card text-foreground text-sm font-medium hover:bg-muted active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              {isResending ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</> : "Resend key to my email"}
+            </button>
+          )}
         </div>
       </div>
     </div>
