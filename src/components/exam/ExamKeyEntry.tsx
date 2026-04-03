@@ -1,41 +1,24 @@
-import { useEffect, useState } from "react";
-import { KeyRound, ArrowLeft, Loader2, Copy, Check } from "lucide-react";
-import { toast } from "sonner";
+import { useState } from "react";
+import { KeyRound, ArrowLeft, Loader2 } from "lucide-react";
 
 interface ExamKeyEntryProps {
   testName: string;
-  assignedKey?: string | null;
   onVerify: (key: string) => Promise<boolean>;
   onBack: () => void;
 }
 
-const ExamKeyEntry = ({ testName, assignedKey, onVerify, onBack }: ExamKeyEntryProps) => {
+const ExamKeyEntry = ({ testName, onVerify, onBack }: ExamKeyEntryProps) => {
   const [key, setKey] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState("");
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (assignedKey) {
-      setKey(assignedKey);
-    }
-  }, [assignedKey]);
 
   const handleSubmit = async () => {
     if (!key.trim()) { setError("Please enter the exam key"); return; }
     setError("");
     setVerifying(true);
     const valid = await onVerify(key.trim());
-    if (!valid) setError("Invalid exam key. Use the key shown above or from your notifications.");
+    if (!valid) setError("Invalid exam key. Please check the key sent to your email and try again.");
     setVerifying(false);
-  };
-
-  const handleCopyKey = async () => {
-    if (!assignedKey) return;
-    await navigator.clipboard.writeText(assignedKey);
-    setCopied(true);
-    toast.success("Exam key copied");
-    window.setTimeout(() => setCopied(false), 1500);
   };
 
   return (
@@ -50,31 +33,14 @@ const ExamKeyEntry = ({ testName, assignedKey, onVerify, onBack }: ExamKeyEntryP
             <KeyRound className="w-7 h-7 text-primary-foreground" />
           </div>
           <h1 className="text-xl font-display font-bold text-foreground mb-1">{testName}</h1>
-          <p className="text-sm text-muted-foreground">Use your assigned exam key below to start the exam</p>
+          <p className="text-sm text-muted-foreground">Enter the exam key sent to your email to start the exam</p>
         </div>
 
         <div className="bg-card rounded-xl border border-border p-6">
-          {assignedKey && (
-            <div className="mb-4 rounded-lg border border-border bg-muted/50 p-4">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Your exam key</p>
-              <div className="flex items-center justify-between gap-3">
-                <code className="text-base font-mono tracking-[0.25em] text-foreground">{assignedKey}</code>
-                <button
-                  type="button"
-                  onClick={handleCopyKey}
-                  className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
-                >
-                  {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  {copied ? "Copied" : "Copy"}
-                </button>
-              </div>
-            </div>
-          )}
-
           <input
             value={key}
             onChange={e => { setKey(e.target.value); setError(""); }}
-            placeholder="Enter exam key..."
+            placeholder="Enter exam key from email..."
             className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground text-center text-lg font-mono tracking-widest placeholder:text-muted-foreground placeholder:tracking-normal placeholder:text-sm placeholder:font-sans focus:outline-none focus:ring-2 focus:ring-primary/40"
             onKeyDown={e => e.key === "Enter" && handleSubmit()}
             autoFocus

@@ -138,39 +138,13 @@ serve(async (req) => {
       }
     }
 
-    // Fetch the created sessions to get exam keys
+    // Fetch the created sessions to get exam keys for email delivery
     const { data: createdSessions } = await serviceClient
       .from("exam_sessions")
       .select("student_id, exam_key")
       .eq("test_id", testId);
 
-    // Create in-app notifications for each student with their exam key
-    const notifications = (createdSessions || []).map((session: any) => {
-      const student = students.find((s) => s.user_id === session.student_id);
-      return {
-        user_id: session.student_id,
-        title: `Exam Key for "${test.name}"`,
-        message: `Your exam key is: ${session.exam_key}. Use this key to start the exam.`,
-        type: "exam_key",
-        metadata: {
-          test_id: testId,
-          test_name: test.name,
-          exam_key: session.exam_key,
-          time_limit: test.time_limit,
-        },
-      };
-    });
-
-    if (notifications.length > 0) {
-      const { error: notifErr } = await serviceClient
-        .from("notifications")
-        .insert(notifications);
-      if (notifErr) {
-        console.error("Failed to create notifications:", notifErr);
-      }
-    }
-
-    // Send emails with exam keys to all students
+    // Send exam keys by email only
     const emailPromises = (createdSessions || []).map((session: any) => {
       const student = students.find((s) => s.user_id === session.student_id);
       if (!student?.email) return Promise.resolve();
@@ -183,24 +157,19 @@ serve(async (req) => {
     });
     await Promise.allSettled(emailPromises);
 
-    // Build response data
-    const responseNotifications = (createdSessions || []).map((session: any) => {
+    const emailedStudentsCount = (createdSessions || []).filter((session: any) => {
       const student = students.find((s) => s.user_id === session.student_id);
-      return {
-        email: student?.email,
-        name: student?.full_name,
-        exam_key: session.exam_key,
-      };
-    });
+      return Boolean(student?.email);
+    }).length;
 
-    console.log(`Test "${test.name}" activated. ${responseNotifications.length} students notified via app + email.`);
+    console.log(`Test "${test.name}" activated. ${emailedStudentsCount} students notified by email.`);
 
     return new Response(JSON.stringify({
       success: true,
-      message: `Test activated! ${newSessions.length} new sessions. ${notifications.length} students notified via app & email.`,
+      message: `Test activated! ${newSessions.length} new sessions created and exam keys were sent by email.`,
       sessions_created: newSessions.length,
       total_students: students.length,
-      notifications: responseNotifications,
+      emails_sent: emailedStudentsCount,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
