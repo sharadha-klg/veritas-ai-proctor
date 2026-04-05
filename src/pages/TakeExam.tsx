@@ -185,6 +185,22 @@ const TakeExam = () => {
     sendKeyOnEntry();
   }, [stage, testId, test, sessionId]);
 
+  if (loading || (user && !profile)) {
+    return <div className="min-h-screen gradient-bg flex items-center justify-center text-primary-foreground">Loading...</div>;
+  }
+
+  if (!user || profile?.role !== "student") {
+    return <Navigate to="/student/login" />;
+  }
+
+  if (loadingTest) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   if (stage === "complete") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
