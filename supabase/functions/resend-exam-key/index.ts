@@ -116,14 +116,37 @@ serve(async (req) => {
       throw new Error("This exam is not available right now");
     }
 
-    const { data: session, error: sessionErr } = await serviceClient
+    const { data: existingSessions, error: sessionErr } = await serviceClient
       .from("exam_sessions")
-      .select("id, exam_key, status")
+      .select("id, exam_key, status, created_at")
       .eq("test_id", testId)
       .eq("student_id", user.id)
-      .maybeSingle();
+      .order("created_at", { ascending: false })
+      .limit(1);
 
-    if (sessionErr || !session) throw new Error("Exam session not found");
+    if (sessionErr) throw new Error("Failed to load exam session");
+
+    let session = existingSessions?.[0] ?? null;
+
+    if (!session) {
+      const { data: newSession, error: createErr } = await serviceClient
+        .from("exam_sessions")
+        .insert({
+          test_id: testId,
+          student_id: user.id,
+          status: "pending",
+        })
+        .select("id, exam_key, status")
+        .single();
+
+      if (createErr || !newSession) {
+        console.error("Failed to create exam session:", createErr);
+        throw new Error("Could not prepare exam access");
+      }
+
+      session = newSession;
+    }
+
     if (session.status === "completed") throw new Error("This exam is already completed");
     if (!profile.email) throw new Error("No registered student email found");
 

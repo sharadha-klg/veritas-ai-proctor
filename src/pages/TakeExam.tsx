@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,7 @@ const TakeExam = () => {
   const [loadingTest, setLoadingTest] = useState(true);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [resendingKey, setResendingKey] = useState(false);
+  const autoSentKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!testId || !user) return;
@@ -168,6 +169,37 @@ const TakeExam = () => {
       setResendingKey(false);
     }
   };
+
+  useEffect(() => {
+    if (stage !== "key" || !testId || !test) return;
+    if (test.status !== "active") return;
+
+    const autoSendKeyId = sessionId ?? testId;
+    if (autoSentKeyRef.current === autoSendKeyId) return;
+
+    autoSentKeyRef.current = autoSendKeyId;
+
+    const sendKeyOnEntry = async () => {
+      setResendingKey(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("resend-exam-key", {
+          body: { testId },
+        });
+
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+
+        toast.success(data?.message || "Exam key sent to your registered email address");
+      } catch (e: any) {
+        autoSentKeyRef.current = null;
+        toast.error(e.message || "Failed to send exam key");
+      } finally {
+        setResendingKey(false);
+      }
+    };
+
+    sendKeyOnEntry();
+  }, [stage, testId, test, sessionId]);
 
   if (stage === "complete") {
     return (
