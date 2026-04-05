@@ -190,7 +190,15 @@ const ExamEnvironment = ({
 
   const q = questions[currentQ];
   const isUrgent = timeLeft < 300;
-  const progress = ((currentQ + 1) / questions.length) * 100;
+  const progress = questions.length > 0 ? ((currentQ + 1) / questions.length) * 100 : 0;
+
+  if (!q) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
