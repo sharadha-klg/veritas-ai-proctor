@@ -93,22 +93,6 @@ const TakeExam = () => {
     };
   }, [stage, testId, questions.length, navigate]);
 
-  if (loading || (user && !profile)) {
-    return <div className="min-h-screen gradient-bg flex items-center justify-center text-primary-foreground">Loading...</div>;
-  }
-
-  if (!user || profile?.role !== "student") {
-    return <Navigate to="/student/login" />;
-  }
-
-  if (loadingTest) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   const handleVerifyKey = async (key: string): Promise<boolean> => {
     const { data: session } = await supabase
       .from("exam_sessions")
