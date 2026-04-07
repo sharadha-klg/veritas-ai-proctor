@@ -141,6 +141,13 @@ const ExamEnvironment = ({
         is_flagged: riskRef.current >= 50,
       })
       .eq("id", sessionIdRef.current);
+
+    // Auto-terminate if risk score hits 50%
+    if (riskRef.current >= 50 && !hasSubmittedRef.current) {
+      toast.error("Exam terminated: Risk score exceeded safe threshold.", { duration: 10000 });
+      hasSubmittedRef.current = true;
+      handleSubmit(true);
+    }
   }, []);
 
   const handleSubmit = async (terminated = false) => {
