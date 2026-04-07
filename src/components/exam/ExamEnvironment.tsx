@@ -303,6 +303,18 @@ const ExamEnvironment = ({
         </div>
       )}
 
+      {/* Audio warning banner */}
+      {audioWarningCount > 0 && lastAudioViolation && (
+        <div className={`px-6 py-2 flex items-center gap-2 text-xs border-b ${
+          audioWarningCount >= 4
+            ? "bg-destructive/10 text-destructive border-destructive/20"
+            : "bg-warning/10 text-warning border-warning/20"
+        }`}>
+          <Mic className="w-3.5 h-3.5 shrink-0" />
+          <span>Audio Warning {audioWarningCount}/{maxAudioWarnings}: {lastAudioViolation}</span>
+        </div>
+      )}
+
       {/* Main content */}
       <div className="flex-1 flex">
         {/* Questions area */}
