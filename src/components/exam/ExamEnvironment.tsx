@@ -3,9 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Clock, ChevronLeft, ChevronRight, Send, AlertTriangle,
-  Eye, Loader2, Camera, ShieldAlert
+  Eye, Loader2, Camera, ShieldAlert, Mic, MicOff
 } from "lucide-react";
 import { useCameraProctoring } from "@/hooks/useCameraProctoring";
+import { useAudioProctoring } from "@/hooks/useAudioProctoring";
 
 interface Question {
   id: string;
@@ -55,6 +56,17 @@ const ExamEnvironment = ({
     sessionId,
     enabled: !isOpenBook,
     intervalMs: 15000,
+    onTerminate: handleTerminate,
+  });
+
+  // Audio proctoring (disabled for open-book exams)
+  const {
+    audioWarningCount, micReady, lastAudioViolation, maxAudioWarnings
+  } = useAudioProctoring({
+    sessionId,
+    enabled: !isOpenBook,
+    intervalMs: 20000,
+    maxWarnings: 5,
     onTerminate: handleTerminate,
   });
 
@@ -241,7 +253,7 @@ const ExamEnvironment = ({
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Eye className="w-3.5 h-3.5" /> Proctored
               </div>
-              {/* Warning counter */}
+              {/* Camera warning counter */}
               <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
                 warningCount >= 2
                   ? "bg-destructive/10 text-destructive"
@@ -251,6 +263,17 @@ const ExamEnvironment = ({
               }`}>
                 <ShieldAlert className="w-3.5 h-3.5" />
                 {warningCount}/{maxWarnings}
+              </div>
+              {/* Audio warning counter */}
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                audioWarningCount >= 4
+                  ? "bg-destructive/10 text-destructive"
+                  : audioWarningCount >= 2
+                    ? "bg-warning/10 text-warning"
+                    : "bg-muted text-muted-foreground"
+              }`}>
+                {micReady ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
+                {audioWarningCount}/{maxAudioWarnings}
               </div>
             </>
           )}
@@ -277,6 +300,18 @@ const ExamEnvironment = ({
         }`}>
           <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
           <span>Warning {warningCount}/{maxWarnings}: {lastViolation}</span>
+        </div>
+      )}
+
+      {/* Audio warning banner */}
+      {audioWarningCount > 0 && lastAudioViolation && (
+        <div className={`px-6 py-2 flex items-center gap-2 text-xs border-b ${
+          audioWarningCount >= 4
+            ? "bg-destructive/10 text-destructive border-destructive/20"
+            : "bg-warning/10 text-warning border-warning/20"
+        }`}>
+          <Mic className="w-3.5 h-3.5 shrink-0" />
+          <span>Audio Warning {audioWarningCount}/{maxAudioWarnings}: {lastAudioViolation}</span>
         </div>
       )}
 
