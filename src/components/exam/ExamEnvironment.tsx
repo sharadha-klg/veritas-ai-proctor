@@ -253,7 +253,7 @@ const ExamEnvironment = ({
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Eye className="w-3.5 h-3.5" /> Proctored
               </div>
-              {/* Warning counter */}
+              {/* Camera warning counter */}
               <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
                 warningCount >= 2
                   ? "bg-destructive/10 text-destructive"
@@ -263,6 +263,17 @@ const ExamEnvironment = ({
               }`}>
                 <ShieldAlert className="w-3.5 h-3.5" />
                 {warningCount}/{maxWarnings}
+              </div>
+              {/* Audio warning counter */}
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                audioWarningCount >= 4
+                  ? "bg-destructive/10 text-destructive"
+                  : audioWarningCount >= 2
+                    ? "bg-warning/10 text-warning"
+                    : "bg-muted text-muted-foreground"
+              }`}>
+                {micReady ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
+                {audioWarningCount}/{maxAudioWarnings}
               </div>
             </>
           )}
