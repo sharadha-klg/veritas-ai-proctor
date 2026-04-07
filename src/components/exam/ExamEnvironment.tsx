@@ -59,6 +59,17 @@ const ExamEnvironment = ({
     onTerminate: handleTerminate,
   });
 
+  // Audio proctoring (disabled for open-book exams)
+  const {
+    audioWarningCount, micReady, lastAudioViolation, maxAudioWarnings
+  } = useAudioProctoring({
+    sessionId,
+    enabled: !isOpenBook,
+    intervalMs: 20000,
+    maxWarnings: 5,
+    onTerminate: handleTerminate,
+  });
+
   // Timer
   useEffect(() => {
     const timer = setInterval(() => {
