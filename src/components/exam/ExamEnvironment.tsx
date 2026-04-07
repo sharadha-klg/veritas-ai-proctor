@@ -105,11 +105,16 @@ const ExamEnvironment = ({
     };
   }, []);
 
-  // Proctoring: detect fullscreen exit
+  // Proctoring: detect fullscreen exit → TERMINATE
   useEffect(() => {
-    const handleFullscreen = () => {
+    const handleFullscreen = async () => {
       if (!document.fullscreenElement) {
-        logEvent("fullscreen_exit", "high", "Student exited full-screen mode", 10);
+        await logEvent("fullscreen_exit", "critical", "Student exited full-screen mode — exam terminated", 25);
+        toast.error("Exam terminated: You exited full-screen mode.", { duration: 10000 });
+        if (!hasSubmittedRef.current) {
+          hasSubmittedRef.current = true;
+          handleSubmit(true);
+        }
       }
     };
     document.addEventListener("fullscreenchange", handleFullscreen);
