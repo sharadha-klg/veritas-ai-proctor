@@ -225,21 +225,21 @@ const ExamEnvironment = ({
           <span className="text-sm font-medium text-foreground truncate max-w-[200px]">{testName}</span>
         </div>
         <div className="flex items-center gap-4">
+          {/* Risk score - always visible */}
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
+            riskScore >= 50
+              ? "bg-destructive/10 text-destructive"
+              : riskScore >= 25
+                ? "bg-warning/10 text-warning"
+                : "bg-muted text-muted-foreground"
+          }`}>
+            <AlertTriangle className="w-3.5 h-3.5" />
+            Risk: {riskScore}%
+          </div>
           {!isOpenBook && (
             <>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Eye className="w-3.5 h-3.5" /> Proctored
-              </div>
-              {/* Risk score */}
-              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                riskScore >= 50
-                  ? "bg-destructive/10 text-destructive"
-                  : riskScore >= 25
-                    ? "bg-warning/10 text-warning"
-                    : "bg-muted text-muted-foreground"
-              }`}>
-                <AlertTriangle className="w-3.5 h-3.5" />
-                Risk: {riskScore}%
               </div>
               {/* Warning counter */}
               <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
@@ -335,9 +335,9 @@ const ExamEnvironment = ({
           )}
         </div>
 
-        {/* Camera feed (small, top-right corner) */}
+        {/* Camera feed (fixed position, top-right corner) */}
         {!isOpenBook && (
-          <div className="absolute top-16 right-4 z-50">
+          <div className="fixed top-16 right-4 z-50">
             <div className="relative rounded-xl overflow-hidden border-2 border-border shadow-lg bg-black">
               <video
                 ref={videoRef}
@@ -348,13 +348,14 @@ const ExamEnvironment = ({
               />
               {!cameraReady && (
                 <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  <Camera className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground ml-1">Starting...</span>
                 </div>
               )}
               <div className="absolute bottom-1 left-1 flex items-center gap-1">
                 <div className={`w-2 h-2 rounded-full ${cameraReady ? "bg-success animate-pulse" : "bg-destructive"}`} />
                 <span className="text-[10px] text-white drop-shadow-md font-medium">
-                  {cameraReady ? "Live" : "..."}
+                  {cameraReady ? "Live" : "Off"}
                 </span>
               </div>
               <div className="absolute top-1 right-1">
