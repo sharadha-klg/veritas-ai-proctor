@@ -3,9 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Clock, ChevronLeft, ChevronRight, Send, AlertTriangle,
-  Eye, Loader2, Camera, ShieldAlert
+  Eye, Loader2, Camera, ShieldAlert, Mic, MicOff
 } from "lucide-react";
 import { useCameraProctoring } from "@/hooks/useCameraProctoring";
+import { useAudioProctoring } from "@/hooks/useAudioProctoring";
 
 interface Question {
   id: string;
