@@ -225,21 +225,21 @@ const ExamEnvironment = ({
           <span className="text-sm font-medium text-foreground truncate max-w-[200px]">{testName}</span>
         </div>
         <div className="flex items-center gap-4">
+          {/* Risk score - always visible */}
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
+            riskScore >= 50
+              ? "bg-destructive/10 text-destructive"
+              : riskScore >= 25
+                ? "bg-warning/10 text-warning"
+                : "bg-muted text-muted-foreground"
+          }`}>
+            <AlertTriangle className="w-3.5 h-3.5" />
+            Risk: {riskScore}%
+          </div>
           {!isOpenBook && (
             <>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Eye className="w-3.5 h-3.5" /> Proctored
-              </div>
-              {/* Risk score */}
-              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                riskScore >= 50
-                  ? "bg-destructive/10 text-destructive"
-                  : riskScore >= 25
-                    ? "bg-warning/10 text-warning"
-                    : "bg-muted text-muted-foreground"
-              }`}>
-                <AlertTriangle className="w-3.5 h-3.5" />
-                Risk: {riskScore}%
               </div>
               {/* Warning counter */}
               <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
