@@ -335,9 +335,9 @@ const ExamEnvironment = ({
           )}
         </div>
 
-        {/* Camera feed (small, top-right corner) */}
+        {/* Camera feed (fixed position, top-right corner) */}
         {!isOpenBook && (
-          <div className="absolute top-16 right-4 z-50">
+          <div className="fixed top-16 right-4 z-50">
             <div className="relative rounded-xl overflow-hidden border-2 border-border shadow-lg bg-black">
               <video
                 ref={videoRef}
@@ -348,13 +348,14 @@ const ExamEnvironment = ({
               />
               {!cameraReady && (
                 <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  <Camera className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground ml-1">Starting...</span>
                 </div>
               )}
               <div className="absolute bottom-1 left-1 flex items-center gap-1">
                 <div className={`w-2 h-2 rounded-full ${cameraReady ? "bg-success animate-pulse" : "bg-destructive"}`} />
                 <span className="text-[10px] text-white drop-shadow-md font-medium">
-                  {cameraReady ? "Live" : "..."}
+                  {cameraReady ? "Live" : "Off"}
                 </span>
               </div>
               <div className="absolute top-1 right-1">
