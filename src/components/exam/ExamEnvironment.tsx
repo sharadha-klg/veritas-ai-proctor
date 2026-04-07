@@ -105,11 +105,16 @@ const ExamEnvironment = ({
     };
   }, []);
 
-  // Proctoring: detect fullscreen exit
+  // Proctoring: detect fullscreen exit → TERMINATE
   useEffect(() => {
-    const handleFullscreen = () => {
+    const handleFullscreen = async () => {
       if (!document.fullscreenElement) {
-        logEvent("fullscreen_exit", "high", "Student exited full-screen mode", 10);
+        await logEvent("fullscreen_exit", "critical", "Student exited full-screen mode — exam terminated", 25);
+        toast.error("Exam terminated: You exited full-screen mode.", { duration: 10000 });
+        if (!hasSubmittedRef.current) {
+          hasSubmittedRef.current = true;
+          handleSubmit(true);
+        }
       }
     };
     document.addEventListener("fullscreenchange", handleFullscreen);
@@ -136,6 +141,13 @@ const ExamEnvironment = ({
         is_flagged: riskRef.current >= 50,
       })
       .eq("id", sessionIdRef.current);
+
+    // Auto-terminate if risk score hits 50%
+    if (riskRef.current >= 50 && !hasSubmittedRef.current) {
+      toast.error("Exam terminated: Risk score exceeded safe threshold.", { duration: 10000 });
+      hasSubmittedRef.current = true;
+      handleSubmit(true);
+    }
   }, []);
 
   const handleSubmit = async (terminated = false) => {
@@ -217,6 +229,17 @@ const ExamEnvironment = ({
             <>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Eye className="w-3.5 h-3.5" /> Proctored
+              </div>
+              {/* Risk score */}
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                riskScore >= 50
+                  ? "bg-destructive/10 text-destructive"
+                  : riskScore >= 25
+                    ? "bg-warning/10 text-warning"
+                    : "bg-muted text-muted-foreground"
+              }`}>
+                <AlertTriangle className="w-3.5 h-3.5" />
+                Risk: {riskScore}%
               </div>
               {/* Warning counter */}
               <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
