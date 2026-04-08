@@ -364,7 +364,7 @@ const ExamEnvironment = ({
               starterCode={q.starter_code}
               onChange={(val) => setAnswers({ ...answers, [q.id]: val })}
             />
-          )
+          )}
         </div>
 
         {/* Camera feed (fixed position, top-right corner) */}
