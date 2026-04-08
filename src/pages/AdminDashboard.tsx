@@ -3,16 +3,17 @@ import DashboardHeader from "@/components/DashboardHeader";
 import CreateTestForm from "@/components/CreateTestForm";
 import ResultsTab from "@/components/admin/ResultsTab";
 import AnalyticsTab from "@/components/admin/AnalyticsTab";
+import LiveMonitoringTab from "@/components/admin/LiveMonitoringTab";
 import { Navigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Users, FileText, BarChart3, Plus, TrendingUp,
-  ToggleLeft, ToggleRight, Loader2, Trash2
+  ToggleLeft, ToggleRight, Loader2, Trash2, Radio
 } from "lucide-react";
 
-const tabs = ["Profile", "Tests", "Results", "Analytics"] as const;
+const tabs = ["Profile", "Tests", "Live", "Results", "Analytics"] as const;
 type Tab = typeof tabs[number];
 
 interface Test {
@@ -51,6 +52,7 @@ const AdminDashboard = () => {
                     ${tab === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
                   {t === "Profile" && <Users className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
                   {t === "Tests" && <FileText className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
+                  {t === "Live" && <Radio className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
                   {t === "Results" && <BarChart3 className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
                   {t === "Analytics" && <TrendingUp className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
                   {t}
@@ -59,6 +61,7 @@ const AdminDashboard = () => {
             </div>
             {tab === "Profile" && <ProfileTab profile={profile} />}
             {tab === "Tests" && <TestsTab onCreateNew={() => setShowCreate(true)} userId={user.id} />}
+            {tab === "Live" && <LiveMonitoringTab userId={user.id} />}
             {tab === "Results" && <ResultsTab userId={user.id} />}
             {tab === "Analytics" && <AnalyticsTab userId={user.id} />}
           </>
