@@ -6,76 +6,95 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Piston API language mappings
-const LANGUAGE_MAP: Record<string, { language: string; version: string }> = {
-  python: { language: "python", version: "3.10.0" },
-  c: { language: "c", version: "10.2.0" },
-  cpp: { language: "c++", version: "10.2.0" },
-  java: { language: "java", version: "15.0.2" },
-  r: { language: "r", version: "4.1.1" },
+const LANGUAGE_MAP: Record<string, string> = {
+  python: "python3",
+  c: "c",
+  cpp: "cpp",
+  java: "java",
+  r: "r",
 };
 
+async function pollResult(id: string, maxAttempts = 20): Promise<any> {
+  for (let i = 0; i < maxAttempts; i++) {
+    const res = await fetch(
+      `https://api.paiza.io/runners/get_details?id=${id}&api_key=guest`
+    );
+    const data = await res.json();
+    if (data.status === "completed") return data;
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  throw new Error("Code execution timed out");
+}
+
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS")
+    return new Response(null, { headers: corsHeaders });
 
   try {
     const { code, language, stdin } = await req.json();
 
     if (!code || !language) {
-      return new Response(JSON.stringify({ error: "Missing code or language" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Missing code or language" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    const langConfig = LANGUAGE_MAP[language.toLowerCase()];
-    if (!langConfig) {
-      return new Response(JSON.stringify({ error: `Unsupported language: ${language}. Supported: ${Object.keys(LANGUAGE_MAP).join(", ")}` }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const lang = LANGUAGE_MAP[language.toLowerCase()];
+    if (!lang) {
+      return new Response(
+        JSON.stringify({
+          error: `Unsupported language: ${language}. Supported: ${Object.keys(LANGUAGE_MAP).join(", ")}`,
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Use Piston API (free, no API key needed)
-    const pistonResponse = await fetch("https://emkc.org/api/v2/piston/execute", {
+    // Create execution job
+    const createRes = await fetch("https://api.paiza.io/runners/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        language: langConfig.language,
-        version: langConfig.version,
-        files: [{ name: language === "java" ? "Main.java" : `main.${language}`, content: code }],
-        stdin: stdin || "",
-        run_timeout: 10000, // 10 seconds max
-        compile_timeout: 10000,
+        source_code: code,
+        language: lang,
+        input: stdin || "",
+        api_key: "guest",
       }),
     });
 
-    if (!pistonResponse.ok) {
-      const errText = await pistonResponse.text();
-      console.error("Piston error:", pistonResponse.status, errText);
-      return new Response(JSON.stringify({ error: "Code execution service unavailable" }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!createRes.ok) {
+      const errText = await createRes.text();
+      console.error("Paiza create error:", createRes.status, errText);
+      return new Response(
+        JSON.stringify({ error: "Code execution service unavailable" }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    const result = await pistonResponse.json();
+    const createData = await createRes.json();
+    const result = await pollResult(createData.id);
 
-    return new Response(JSON.stringify({
-      output: result.run?.output || "",
-      stderr: result.run?.stderr || "",
-      stdout: result.run?.stdout || "",
-      exitCode: result.run?.code ?? -1,
-      compileOutput: result.compile?.output || "",
-      compileError: result.compile?.stderr || "",
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const stdout = result.stdout || "";
+    const stderr = result.stderr || "";
+    const buildStderr = result.build_stderr || "";
+    const exitCode = result.exit_code ?? (result.result === "success" ? 0 : 1);
+
+    return new Response(
+      JSON.stringify({
+        output: stdout || stderr,
+        stderr,
+        stdout,
+        exitCode,
+        compileOutput: buildStderr ? buildStderr : "",
+        compileError: result.build_result === "failure" ? buildStderr : "",
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (e) {
     console.error("execute-code error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 });
