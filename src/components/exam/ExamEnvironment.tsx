@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useCameraProctoring } from "@/hooks/useCameraProctoring";
 import { useAudioProctoring } from "@/hooks/useAudioProctoring";
+import CodingEnvironment from "@/components/exam/CodingEnvironment";
 
 interface Question {
   id: string;
