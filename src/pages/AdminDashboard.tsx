@@ -3,16 +3,17 @@ import DashboardHeader from "@/components/DashboardHeader";
 import CreateTestForm from "@/components/CreateTestForm";
 import ResultsTab from "@/components/admin/ResultsTab";
 import AnalyticsTab from "@/components/admin/AnalyticsTab";
+import LiveMonitoringTab from "@/components/admin/LiveMonitoringTab";
 import { Navigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Users, FileText, BarChart3, Plus, TrendingUp,
-  ToggleLeft, ToggleRight, Loader2, Trash2
+  ToggleLeft, ToggleRight, Loader2, Trash2, Radio
 } from "lucide-react";
 
-const tabs = ["Profile", "Tests", "Results", "Analytics"] as const;
+const tabs = ["Profile", "Tests", "Live", "Results", "Analytics"] as const;
 type Tab = typeof tabs[number];
 
 interface Test {
