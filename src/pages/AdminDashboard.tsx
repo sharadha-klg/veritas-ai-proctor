@@ -61,6 +61,7 @@ const AdminDashboard = () => {
             </div>
             {tab === "Profile" && <ProfileTab profile={profile} />}
             {tab === "Tests" && <TestsTab onCreateNew={() => setShowCreate(true)} userId={user.id} />}
+            {tab === "Live" && <LiveMonitoringTab userId={user.id} />}
             {tab === "Results" && <ResultsTab userId={user.id} />}
             {tab === "Analytics" && <AnalyticsTab userId={user.id} />}
           </>
