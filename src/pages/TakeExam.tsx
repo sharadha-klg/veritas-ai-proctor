@@ -49,6 +49,16 @@ const TakeExam = () => {
       if (studentSession) {
         setSessionId(studentSession.id);
 
+        if (studentSession.status === "completed" || studentSession.status === "terminated") {
+          toast.error(
+            studentSession.status === "terminated"
+              ? "Your exam was terminated due to violations. Contact your admin for re-access."
+              : "You have already completed this exam."
+          );
+          navigate("/student/dashboard");
+          return;
+        }
+
         if (studentSession.status === "in_progress") {
           setStage("exam");
         }
