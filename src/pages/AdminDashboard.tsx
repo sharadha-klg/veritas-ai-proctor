@@ -52,6 +52,7 @@ const AdminDashboard = () => {
                     ${tab === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
                   {t === "Profile" && <Users className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
                   {t === "Tests" && <FileText className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
+                  {t === "Live" && <Radio className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
                   {t === "Results" && <BarChart3 className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
                   {t === "Analytics" && <TrendingUp className="w-4 h-4 inline mr-1.5 -mt-0.5" />}
                   {t}
