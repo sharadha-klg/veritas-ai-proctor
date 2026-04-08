@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useCameraProctoring } from "@/hooks/useCameraProctoring";
 import { useAudioProctoring } from "@/hooks/useAudioProctoring";
+import CodingEnvironment from "@/components/exam/CodingEnvironment";
 
 interface Question {
   id: string;
@@ -356,17 +357,13 @@ const ExamEnvironment = ({
 
           {/* Coding answer */}
           {q.question_type === "coding" && (
-            <div>
-              {q.language && (
-                <p className="text-xs text-muted-foreground mb-2">Language: {q.language}</p>
-              )}
-              <textarea
-                value={answers[q.id] || q.starter_code || ""}
-                onChange={e => setAnswers({ ...answers, [q.id]: e.target.value })}
-                className="w-full min-h-[240px] px-4 py-3 rounded-xl bg-muted border border-border text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 resize-y"
-                placeholder="Write your code here..."
-              />
-            </div>
+            <CodingEnvironment
+              questionId={q.id}
+              code={answers[q.id] ?? q.starter_code ?? ""}
+              defaultLanguage={q.language}
+              starterCode={q.starter_code}
+              onChange={(val) => setAnswers({ ...answers, [q.id]: val })}
+            />
           )}
         </div>
 
