@@ -259,6 +259,19 @@ const TakeExam = () => {
     );
   }
 
+  if (stage === "instructions") {
+    return (
+      <ExamInstructionsPage
+        testName={test?.name || "Exam"}
+        timeLimit={test?.time_limit || 0}
+        totalQuestions={questions.length || 0}
+        isOpenBook={test?.is_open_book || false}
+        onAccept={handleInstructionsAccepted}
+        onCancel={() => navigate("/student/dashboard")}
+      />
+    );
+  }
+
   if (stage === "exam" && sessionId) {
     if (loadingQuestions) {
       return (
