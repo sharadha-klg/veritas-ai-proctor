@@ -83,7 +83,13 @@ const CodingEnvironment = ({
           <div className="relative">
             <select
               value={language}
-              onChange={(e) => setLanguage(e.target.value)}
+              onChange={(e) => {
+                const newLang = e.target.value;
+                setLanguage(newLang);
+                onChange(STARTER_TEMPLATES[newLang] || "");
+                setOutput("");
+                setExitCode(null);
+              }}
               className="appearance-none bg-muted border border-border rounded-lg px-3 py-1.5 pr-8 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
             >
               {LANGUAGES.map((l) => (
