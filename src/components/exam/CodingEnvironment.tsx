@@ -18,6 +18,14 @@ const LANGUAGES = [
   { value: "r", label: "R", extension: ".r" },
 ];
 
+const STARTER_TEMPLATES: Record<string, string> = {
+  python: `# Write your solution here\n\ndef main():\n    pass\n\nif __name__ == "__main__":\n    main()\n`,
+  c: `#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    \n    return 0;\n}\n`,
+  cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    \n    return 0;\n}\n`,
+  java: `import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your solution here\n        \n    }\n}\n`,
+  r: `# Write your solution here\n\nmain <- function() {\n  \n}\n\nmain()\n`,
+};
+
 const CodingEnvironment = ({
   questionId, code, defaultLanguage, starterCode, onChange,
 }: CodingEnvironmentProps) => {
@@ -75,7 +83,13 @@ const CodingEnvironment = ({
           <div className="relative">
             <select
               value={language}
-              onChange={(e) => setLanguage(e.target.value)}
+              onChange={(e) => {
+                const newLang = e.target.value;
+                setLanguage(newLang);
+                onChange(STARTER_TEMPLATES[newLang] || "");
+                setOutput("");
+                setExitCode(null);
+              }}
               className="appearance-none bg-muted border border-border rounded-lg px-3 py-1.5 pr-8 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
             >
               {LANGUAGES.map((l) => (
