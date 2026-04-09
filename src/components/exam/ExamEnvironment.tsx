@@ -15,6 +15,7 @@ interface Question {
   question_type: string;
   marks: number;
   options: string[] | null;
+  correct_answer?: string | null;
   language?: string | null;
   starter_code?: string | null;
   sort_order: number;
@@ -166,13 +167,19 @@ const ExamEnvironment = ({
   const handleSubmit = async (terminated = false) => {
     setSubmitting(true);
     try {
-      const answerRows = questions.map(q => ({
-        session_id: sessionId,
-        question_id: q.id,
-        answer_text: answers[q.id] || "",
-        is_correct: q.question_type === "mcq" ? undefined : undefined,
-        marks_awarded: 0,
-      }));
+      const answerRows = questions.map(q => {
+        const studentAnswer = answers[q.id] || "";
+        const isMcq = q.question_type === "mcq";
+        const isCorrect = isMcq ? (studentAnswer === q.correct_answer) : null;
+        const marksAwarded = isMcq ? (isCorrect ? q.marks : 0) : 0;
+        return {
+          session_id: sessionId,
+          question_id: q.id,
+          answer_text: studentAnswer,
+          is_correct: isCorrect,
+          marks_awarded: marksAwarded,
+        };
+      });
 
       await supabase.from("student_answers").insert(answerRows);
       await supabase.from("exam_sessions")
