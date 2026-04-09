@@ -6,9 +6,10 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import ExamKeyEntry from "@/components/exam/ExamKeyEntry";
 import SystemCheckPage from "@/components/exam/SystemCheckPage";
+import ExamInstructionsPage from "@/components/exam/ExamInstructionsPage";
 import ExamEnvironment from "@/components/exam/ExamEnvironment";
 
-type ExamStage = "key" | "checks" | "exam" | "complete";
+type ExamStage = "key" | "checks" | "instructions" | "exam" | "complete";
 
 const TakeExam = () => {
   const { testId } = useParams<{ testId: string }>();
