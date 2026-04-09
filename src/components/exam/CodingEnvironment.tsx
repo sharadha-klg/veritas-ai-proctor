@@ -18,6 +18,14 @@ const LANGUAGES = [
   { value: "r", label: "R", extension: ".r" },
 ];
 
+const STARTER_TEMPLATES: Record<string, string> = {
+  python: `# Write your solution here\n\ndef main():\n    pass\n\nif __name__ == "__main__":\n    main()\n`,
+  c: `#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    \n    return 0;\n}\n`,
+  cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    \n    return 0;\n}\n`,
+  java: `import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your solution here\n        \n    }\n}\n`,
+  r: `# Write your solution here\n\nmain <- function() {\n  \n}\n\nmain()\n`,
+};
+
 const CodingEnvironment = ({
   questionId, code, defaultLanguage, starterCode, onChange,
 }: CodingEnvironmentProps) => {
