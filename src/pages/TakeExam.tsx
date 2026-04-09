@@ -134,6 +134,10 @@ const TakeExam = () => {
         .eq("id", sessionId);
     }
 
+    setStage("instructions");
+  };
+
+  const handleInstructionsAccepted = async () => {
     try {
       await document.documentElement.requestFullscreen();
     } catch {}
