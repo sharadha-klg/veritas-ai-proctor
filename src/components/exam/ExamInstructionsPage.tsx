@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BookOpen, Clock, AlertTriangle, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { BookOpen, AlertTriangle, ShieldCheck, CheckCircle2, Monitor, Camera } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface ExamInstructionsPageProps {
@@ -44,17 +44,35 @@ const ExamInstructionsPage = ({
         </div>
 
         <div className="bg-card rounded-xl border border-border p-5 mb-4 space-y-4">
+          {/* Technical Requirements */}
           <div className="flex items-start gap-3">
-            <Clock className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+            <Monitor className="w-5 h-5 text-primary mt-0.5 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-foreground">Time Limit</p>
-              <p className="text-xs text-muted-foreground">
-                You have <strong>{timeLimit} minutes</strong> to complete{" "}
-                <strong>{totalQuestions} question{totalQuestions !== 1 ? "s" : ""}</strong>. The timer starts once you proceed.
-              </p>
+              <p className="text-sm font-medium text-foreground">Technical Requirements</p>
+              <ul className="text-xs text-muted-foreground list-disc list-inside space-y-1 mt-1">
+                <li>Ensure stable internet connection throughout the exam.</li>
+                <li>Close all background applications before starting.</li>
+                <li>Allow camera, microphone, and screen permissions.</li>
+                <li>Use laptop/desktop only (mobile devices not allowed).</li>
+              </ul>
             </div>
           </div>
 
+          {/* Proctoring Guidelines */}
+          <div className="flex items-start gap-3">
+            <Camera className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-foreground">Proctoring Guidelines</p>
+              <ul className="text-xs text-muted-foreground list-disc list-inside space-y-1 mt-1">
+                <li>Face must be clearly visible at all times.</li>
+                <li>Do not cover camera or mute microphone.</li>
+                <li>Only one person should be present in front of the screen.</li>
+                <li>Avoid excessive movement or leaving seat.</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Proctoring Info */}
           <div className="flex items-start gap-3">
             <ShieldCheck className="w-5 h-5 text-primary mt-0.5 shrink-0" />
             <div>
@@ -67,6 +85,7 @@ const ExamInstructionsPage = ({
             </div>
           </div>
 
+          {/* Important Rules */}
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-warning mt-0.5 shrink-0" />
             <div>
@@ -81,6 +100,7 @@ const ExamInstructionsPage = ({
             </div>
           </div>
 
+          {/* Submission */}
           <div className="flex items-start gap-3">
             <CheckCircle2 className="w-5 h-5 text-success mt-0.5 shrink-0" />
             <div>
