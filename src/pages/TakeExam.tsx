@@ -6,9 +6,10 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import ExamKeyEntry from "@/components/exam/ExamKeyEntry";
 import SystemCheckPage from "@/components/exam/SystemCheckPage";
+import ExamInstructionsPage from "@/components/exam/ExamInstructionsPage";
 import ExamEnvironment from "@/components/exam/ExamEnvironment";
 
-type ExamStage = "key" | "checks" | "exam" | "complete";
+type ExamStage = "key" | "checks" | "instructions" | "exam" | "complete";
 
 const TakeExam = () => {
   const { testId } = useParams<{ testId: string }>();
@@ -133,6 +134,10 @@ const TakeExam = () => {
         .eq("id", sessionId);
     }
 
+    setStage("instructions");
+  };
+
+  const handleInstructionsAccepted = async () => {
     try {
       await document.documentElement.requestFullscreen();
     } catch {}
@@ -249,6 +254,19 @@ const TakeExam = () => {
     return (
       <SystemCheckPage
         onAllPassed={handleSystemChecksPassed}
+        onCancel={() => navigate("/student/dashboard")}
+      />
+    );
+  }
+
+  if (stage === "instructions") {
+    return (
+      <ExamInstructionsPage
+        testName={test?.name || "Exam"}
+        timeLimit={test?.time_limit || 0}
+        totalQuestions={questions.length || 0}
+        isOpenBook={test?.is_open_book || false}
+        onAccept={handleInstructionsAccepted}
         onCancel={() => navigate("/student/dashboard")}
       />
     );
